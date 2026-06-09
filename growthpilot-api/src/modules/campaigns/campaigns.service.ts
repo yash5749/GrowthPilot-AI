@@ -124,9 +124,10 @@ export class CampaignsService {
         },
       });
 
-      // Call channel client simulator
+      // Call channel client (external service)
       await this.channelClientService.send({
         communicationId: communication.id,
+        campaignId: id,
         customer: {
           id: customer.id,
           name: customer.name,

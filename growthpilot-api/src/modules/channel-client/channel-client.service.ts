@@ -9,75 +9,61 @@ export class ChannelClientService {
 
   async send(payload: {
     communicationId: string;
+    campaignId: string;
     customer: { id: string; name: string; phone: string | null; email: string };
     channel: string;
     message: string;
   }) {
-    const port = this.configService.get<number>('PORT') || 4000;
-    const callbackUrl = `http://localhost:${port}/api/callbacks/channel-event`;
+    const channelServiceUrl = this.configService.get<string>('CHANNEL_SERVICE_URL');
 
-    // Determine path: 90% success, 10% failure
-    const isSuccess = Math.random() > 0.10;
-
-    this.logger.log(`Starting simulated outreach for comm ID ${payload.communicationId} via ${payload.channel}. Expected path: ${isSuccess ? 'Success' : 'Failure'}`);
-
-    if (isSuccess) {
-      this.scheduleCallback(payload.communicationId, 'sent', 500, callbackUrl);
-      this.scheduleCallback(payload.communicationId, 'delivered', 1500, callbackUrl);
-      this.scheduleCallback(payload.communicationId, 'opened', 3000, callbackUrl);
-      this.scheduleCallback(payload.communicationId, 'clicked', 4500, callbackUrl);
-      this.scheduleCallback(payload.communicationId, 'purchased', 6000, callbackUrl);
-    } else {
-      this.scheduleCallback(payload.communicationId, 'sent', 500, callbackUrl);
-      this.scheduleCallback(
-        payload.communicationId,
-        'failed',
-        1500,
-        callbackUrl,
-        'Carrier delivery failed: temporary unreachable number',
-      );
+    if (!channelServiceUrl) {
+      this.logger.warn('CHANNEL_SERVICE_URL not configured, skipping external channel call');
+      return;
     }
-  }
 
-  private scheduleCallback(
-    communicationId: string,
-    eventType: string,
-    delayMs: number,
-    callbackUrl: string,
-    failureReason?: string,
-  ) {
-    setTimeout(async () => {
-      try {
-        const body = {
-          communicationId,
-          eventType,
-          timestamp: new Date().toISOString(),
-          failureReason,
-        };
+    const sendUrl = `${channelServiceUrl.replace(/\/$/, '')}/channel/send`;
 
-        const response = await fetch(callbackUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
+    const body = {
+      communicationId: payload.communicationId,
+      campaignId: payload.campaignId,
+      customer: {
+        id: payload.customer.id,
+        name: payload.customer.name,
+        phone: payload.customer.phone,
+        email: payload.customer.email,
+      },
+      channel: payload.channel,
+      message: payload.message,
+    };
 
-        if (!response.ok) {
-          const text = await response.text();
-          this.logger.error(
-            `Failed to deliver simulated webhook for ${eventType} on ${communicationId}. Status: ${response.status}. Body: ${text}`,
-          );
-        } else {
-          this.logger.log(
-            `Successfully triggered simulated callback event [${eventType}] for comm ID ${communicationId}`,
-          );
-        }
-      } catch (err: any) {
+    try {
+      this.logger.log(`Sending communication ${payload.communicationId} to channel service at ${sendUrl}`);
+
+      const response = await fetch(sendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
         this.logger.error(
-          `Error triggering callback webhook for ${eventType} on ${communicationId}: ${err.message}`,
+          `Channel service responded with ${response.status}: ${text}`,
         );
+        throw new Error(`Channel service error: ${response.status} - ${text}`);
       }
-    }, delayMs);
+
+      const result = await response.json();
+      this.logger.log(
+        `Channel service accepted communication ${payload.communicationId}: ${JSON.stringify(result)}`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Failed to send communication ${payload.communicationId} to channel service: ${err.message}`,
+      );
+      throw err;
+    }
   }
 }
