@@ -1,0 +1,102 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  city      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders         Order[]
+  communications Communication[]
+
+  @@map("customers")
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  customerId  String   @map("customer_id")
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderTotal  Float    @map("order_total")
+  currency    String   @default("USD")
+  orderedAt   DateTime @default(now()) @map("ordered_at")
+  channel     String
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("orders")
+}
+
+model Segment {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  ruleJson    Json       @map("rule_json")
+  aiGenerated Boolean    @default(false) @map("ai_generated")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  campaigns   Campaign[]
+
+  @@map("segments")
+}
+
+model Campaign {
+  id              String          @id @default(uuid())
+  name            String
+  objective       String
+  segmentId       String          @map("segment_id")
+  segment         Segment         @relation(fields: [segmentId], references: [id], onDelete: Restrict)
+  messageTemplate String          @map("message_template")
+  channel         String
+  status          String          @default("draft") // e.g. "draft", "approved", "sent"
+  createdAt       DateTime        @default(now()) @map("created_at")
+  sentAt          DateTime?       @map("sent_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  communications  Communication[]
+
+  @@map("campaigns")
+}
+
+model Communication {
+  id              String               @id @default(uuid())
+  campaignId      String               @map("campaign_id")
+  campaign        Campaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customerId      String               @map("customer_id")
+  customer        Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  channel         String
+  messageRendered String               @map("message_rendered")
+  status          String               @default("pending") // e.g. "pending", "sent", "delivered", "failed", "opened", "read", "clicked", "purchased"
+  sentAt          DateTime?            @map("sent_at")
+  deliveredAt     DateTime?            @map("delivered_at")
+  openedAt        DateTime?            @map("opened_at")
+  clickedAt       DateTime?            @map("clicked_at")
+  purchasedAt     DateTime?            @map("purchased_at")
+  failureReason   String?              @map("failure_reason")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  events          CommunicationEvent[]
+
+  @@unique([campaignId, customerId])
+  @@map("communications")
+}
+
+model CommunicationEvent {
+  id              String        @id @default(uuid())
+  communicationId String        @map("communication_id")
+  communication   Communication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  eventType       String        @map("event_type") // e.g. "sent", "delivered", "opened", "clicked", "purchased", "failed"
+  payloadJson     Json?         @map("payload_json")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("communication_events")
+}
