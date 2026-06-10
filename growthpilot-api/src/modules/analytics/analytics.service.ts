@@ -35,6 +35,7 @@ export class AnalyticsService {
     let deliveredCount = 0;
     let failedCount = 0;
     let openedCount = 0;
+    let readCount = 0;
     let clickedCount = 0;
     let purchasedCount = 0;
     let revenueAttributed = 0;
@@ -44,19 +45,22 @@ export class AnalyticsService {
     for (const comm of communications) {
       const status = comm.status;
 
-      if (['sent', 'delivered', 'opened', 'clicked', 'purchased'].includes(status)) {
+      if (['sent', 'delivered', 'opened', 'read', 'clicked', 'purchased'].includes(status)) {
         sentCount++;
       }
-      if (['delivered', 'opened', 'clicked', 'purchased'].includes(status)) {
+      if (['delivered', 'opened', 'read', 'clicked', 'purchased'].includes(status)) {
         deliveredCount++;
       }
       if (status === 'failed') {
         failedCount++;
       }
-      if (['opened', 'clicked', 'purchased'].includes(status)) {
+      if (comm.openedAt) {
         openedCount++;
       }
-      if (['clicked', 'purchased'].includes(status)) {
+      if (comm.readAt) {
+        readCount++;
+      }
+      if (comm.clickedAt) {
         clickedCount++;
       }
       if (status === 'purchased') {
@@ -76,6 +80,7 @@ export class AnalyticsService {
 
     const deliveryRate = sentCount > 0 ? (deliveredCount / sentCount) : 0;
     const openRate = deliveredCount > 0 ? (openedCount / deliveredCount) : 0;
+    const readRate = openedCount > 0 ? (readCount / openedCount) : 0;
     const clickRate = openedCount > 0 ? (clickedCount / openedCount) : 0;
     const conversionRate = sentCount > 0 ? (purchasedCount / sentCount) : 0;
 
@@ -89,12 +94,14 @@ export class AnalyticsService {
       deliveredCount,
       failedCount,
       openedCount,
+      readCount,
       clickedCount,
       purchasedCount,
       revenueAttributed,
       rates: {
         deliveryRate,
         openRate,
+        readRate,
         clickRate,
         conversionRate,
       },
@@ -132,25 +139,29 @@ export class AnalyticsService {
     let deliveredCount = 0;
     let failedCount = 0;
     let openedCount = 0;
+    let readCount = 0;
     let clickedCount = 0;
     let purchasedCount = 0;
     let revenueAttributed = 0;
 
     for (const comm of allComms) {
       const status = comm.status;
-      if (['sent', 'delivered', 'opened', 'clicked', 'purchased'].includes(status)) {
+      if (['sent', 'delivered', 'opened', 'read', 'clicked', 'purchased'].includes(status)) {
         sentCount++;
       }
-      if (['delivered', 'opened', 'clicked', 'purchased'].includes(status)) {
+      if (['delivered', 'opened', 'read', 'clicked', 'purchased'].includes(status)) {
         deliveredCount++;
       }
       if (status === 'failed') {
         failedCount++;
       }
-      if (['opened', 'clicked', 'purchased'].includes(status)) {
+      if (comm.openedAt) {
         openedCount++;
       }
-      if (['clicked', 'purchased'].includes(status)) {
+      if (comm.readAt) {
+        readCount++;
+      }
+      if (comm.clickedAt) {
         clickedCount++;
       }
       if (status === 'purchased') {
@@ -168,6 +179,7 @@ export class AnalyticsService {
 
     const deliveryRate = sentCount > 0 ? (deliveredCount / sentCount) : 0;
     const openRate = deliveredCount > 0 ? (openedCount / deliveredCount) : 0;
+    const readRate = openedCount > 0 ? (readCount / openedCount) : 0;
     const clickRate = openedCount > 0 ? (clickedCount / openedCount) : 0;
     const conversionRate = sentCount > 0 ? (purchasedCount / sentCount) : 0;
 
@@ -181,12 +193,14 @@ export class AnalyticsService {
         deliveredCount,
         failedCount,
         openedCount,
+        readCount,
         clickedCount,
         purchasedCount,
       },
       rates: {
         deliveryRate,
         openRate,
+        readRate,
         clickRate,
         conversionRate,
       },

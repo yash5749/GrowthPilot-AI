@@ -8,8 +8,9 @@ const STATUS_ORDER: Record<string, number> = {
   delivered: 2,
   failed: 2,
   opened: 3,
-  clicked: 4,
-  purchased: 5,
+  read: 4,
+  clicked: 5,
+  purchased: 6,
 };
 
 @Injectable()
@@ -84,6 +85,9 @@ export class CommunicationsService {
     }
     if (eventType === CallbackEventType.OPENED || incomingWeight > STATUS_ORDER.opened) {
       if (!comm.openedAt) updateData.openedAt = eventTime;
+    }
+    if (eventType === CallbackEventType.READ || incomingWeight > STATUS_ORDER.read) {
+      if (!comm.readAt) updateData.readAt = eventTime;
     }
     if (eventType === CallbackEventType.CLICKED || incomingWeight > STATUS_ORDER.clicked) {
       if (!comm.clickedAt) updateData.clickedAt = eventTime;

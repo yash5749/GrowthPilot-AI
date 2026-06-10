@@ -5,6 +5,7 @@ export enum CallbackEventType {
   DELIVERED = 'delivered',
   FAILED = 'failed',
   OPENED = 'opened',
+  READ = 'read',
   CLICKED = 'clicked',
   PURCHASED = 'purchased',
 }

@@ -79,6 +79,7 @@ model Communication {
   sentAt          DateTime?            @map("sent_at")
   deliveredAt     DateTime?            @map("delivered_at")
   openedAt        DateTime?            @map("opened_at")
+  readAt          DateTime?            @map("read_at")
   clickedAt       DateTime?            @map("clicked_at")
   purchasedAt     DateTime?            @map("purchased_at")
   failureReason   String?              @map("failure_reason")
