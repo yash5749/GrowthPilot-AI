@@ -34,6 +34,7 @@ model Order {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([customerId])
   @@map("orders")
 }
 
@@ -88,6 +89,8 @@ model Communication {
   events          CommunicationEvent[]
 
   @@unique([campaignId, customerId])
+  @@index([campaignId])
+  @@index([customerId])
   @@map("communications")
 }
 
@@ -99,5 +102,6 @@ model CommunicationEvent {
   payloadJson     Json?         @map("payload_json")
   createdAt       DateTime      @default(now()) @map("created_at")
 
+  @@index([communicationId])
   @@map("communication_events")
 }

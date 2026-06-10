@@ -54,3 +54,7 @@ temp/
 # Mac
 .AppleDouble
 .LSOverride
+
+
+AUDIT_REPORT.md
+STABILIZATION_REPORT.md

@@ -90,4 +90,27 @@ export const api = {
     dashboard: () => fetchJson<import("./types").DashboardAnalytics>("/analytics/dashboard"),
     campaign: (id: string) => fetchJson<import("./types").CampaignAnalytics>(`/analytics/campaigns/${id}`),
   },
+
+  ai: {
+    suggestSegment: (data: import("./types").AiSegmentDto) =>
+      fetchJson<import("./types").SegmentSuggestion>("/ai/segment", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    generateMessage: (data: import("./types").AiMessageDto) =>
+      fetchJson<import("./types").MessageSuggestion>("/ai/message", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    recommendChannel: (data: import("./types").AiChannelRecommendationDto) =>
+      fetchJson<import("./types").ChannelRecommendation>("/ai/recommend-channel", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    generateInsights: (data: import("./types").AiInsightsDto) =>
+      fetchJson<import("./types").InsightSummary>("/ai/insights", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
 };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import type { Campaign, Communication, CampaignAnalytics } from "@/lib/types";
+import type { Campaign, Communication, CampaignAnalytics, InsightSummary } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Progress } from "@/components/ui/progress";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Check } from "lucide-react";
+import { ArrowLeft, Send, Check, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function CampaignDetailPage() {
@@ -43,6 +43,24 @@ export default function CampaignDetailPage() {
   };
 
   useEffect(() => { fetchAll(); }, [id]);
+
+  const [aiInsights, setAiInsights] = useState<InsightSummary | null>(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
+
+  const handleGenerateInsights = async () => {
+    setAiInsightsLoading(true);
+    setAiInsightsError(null);
+    setAiInsights(null);
+    try {
+      const res = await api.ai.generateInsights({ campaignId: id });
+      setAiInsights(res);
+    } catch (e: unknown) {
+      setAiInsightsError(e instanceof Error ? e.message : "Failed to generate insights");
+    } finally {
+      setAiInsightsLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -165,6 +183,10 @@ export default function CampaignDetailPage() {
         <TabsList>
           <TabsTrigger value="funnel">Event Funnel</TabsTrigger>
           <TabsTrigger value="recipients">Recipients ({communications.length})</TabsTrigger>
+          <TabsTrigger value="insights" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            AI Insights
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="funnel" className="space-y-4 mt-4">
@@ -244,6 +266,66 @@ export default function CampaignDetailPage() {
               </Table>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="insights" className="mt-4 space-y-4">
+          <Card>
+            <CardContent className="p-6">
+              {!aiInsights && !aiInsightsLoading && !aiInsightsError && (
+                <div className="text-center space-y-3">
+                  <Sparkles className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Generate AI-powered insights for this campaign.</p>
+                  <Button onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
+                    {aiInsightsLoading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Generate Insights
+                  </Button>
+                </div>
+              )}
+              {aiInsightsLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {aiInsightsError && (
+                <div className="text-center">
+                  <p className="text-sm text-destructive">{aiInsightsError}</p>
+                  <Button variant="outline" size="sm" onClick={handleGenerateInsights} className="mt-3">
+                    Retry
+                  </Button>
+                </div>
+              )}
+              {aiInsights && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold">AI Campaign Analysis</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Summary</p>
+                      <p className="text-sm">{aiInsights.summary}</p>
+                    </div>
+                    <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Key Insight</p>
+                      <p className="text-sm">{aiInsights.insight}</p>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Next Best Action</p>
+                      <p className="text-sm font-medium">{aiInsights.nextBestAction}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Refresh
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

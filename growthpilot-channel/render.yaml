@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: growthpilot-channel
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /channel/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4001"
+      - key: CRM_CALLBACK_URL
+        sync: false
+      - key: SIM_FAILURE_RATE
+        value: "0.10"
+      - key: CALLBACK_RETRY_ATTEMPTS
+        value: "3"
+      - key: CALLBACK_RETRY_DELAY_MS
+        value: "1000"

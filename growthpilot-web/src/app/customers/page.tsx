@@ -98,7 +98,7 @@ export default function CustomersPage() {
                     <TableCell>${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <Sheet>
-                        <SheetTrigger render={<Button variant="ghost" size="sm" />}>
+                        <SheetTrigger render={<Button variant="ghost" size="sm" onClick={() => setSelected(c)} />}>
                           View
                         </SheetTrigger>
                         <SheetContent className="w-[500px] sm:max-w-lg overflow-y-auto">

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AiModule } from './modules/ai/ai.module';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './config/env.validation';
 import { DbModule } from './db/db.module';
@@ -17,6 +18,7 @@ import { ChannelClientModule } from './modules/channel-client/channel-client.mod
       isGlobal: true,
       validate,
     }),
+    AiModule,
     DbModule,
     HealthModule,
     CustomersModule,
@@ -28,4 +30,4 @@ import { ChannelClientModule } from './modules/channel-client/channel-client.mod
     ChannelClientModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }
