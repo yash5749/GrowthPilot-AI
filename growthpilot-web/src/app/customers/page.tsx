@@ -148,13 +148,13 @@ export default function CustomersPage() {
       )}
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-[500px] sm:max-w-lg overflow-y-auto">
+        <SheetContent className="overflow-y-auto" style={{ maxWidth: "min(576px, 100vw - 2rem)" } as React.CSSProperties}>
           {selected && (
             <>
-              <SheetHeader className="border-b border-border pb-4">
+              <SheetHeader className="border-b border-border pb-4 px-6 pt-5">
                 <SheetTitle className="text-sm font-semibold text-foreground">{selected.name}</SheetTitle>
               </SheetHeader>
-              <div className="mt-5 space-y-6">
+              <div className="space-y-6 px-6 pb-6">
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                   <div>
                     <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase flex items-center gap-1.5">

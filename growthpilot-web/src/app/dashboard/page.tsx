@@ -23,6 +23,7 @@ import {
   BarChart3,
   Target,
   MessageSquare,
+  Rocket,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -112,32 +113,63 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 space-y-8">
-      <FadeIn as="section" className="flex flex-col gap-4">
-        <div>
-          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-            Shopper Outreach CRM
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground mt-1">
-            GrowthPilot AI
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-            Autonomous shopper outreach copilot for consumer brands. Segment
-            audiences, generate AI-powered messages, and track campaign performance.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/campaigns">
-            <Button size="sm">
-              <Plus className="size-3.5 mr-1.5" />
-              New Campaign
-            </Button>
-          </Link>
-          <Link href="/analytics">
-            <Button variant="outline" size="sm">
-              <BarChart3 className="size-3.5 mr-1.5" />
-              View Analytics
-            </Button>
-          </Link>
+      <FadeIn as="section">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-muted/40 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-brand-muted/20 via-transparent to-transparent pointer-events-none rounded-full blur-3xl" />
+          <div className="relative px-8 py-10">
+            <div className="flex items-start justify-between gap-8">
+              <div className="max-w-xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <Rocket className="size-4 text-foreground" />
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    Shopper Outreach CRM
+                  </p>
+                </div>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground leading-tight">
+                  GrowthPilot AI
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-lg">
+                  Autonomous shopper outreach copilot for consumer brands.
+                  Segment audiences, generate AI-powered messages,
+                  and track campaign performance.
+                </p>
+                <div className="flex items-center gap-3 mt-6">
+                  <Link href="/campaigns">
+                    <Button>
+                      <Plus className="size-3.5 mr-1.5" />
+                      New Campaign
+                    </Button>
+                  </Link>
+                  <Link href="/analytics">
+                    <Button variant="outline">
+                      <BarChart3 className="size-3.5 mr-1.5" />
+                      View Analytics
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              <div className="hidden lg:flex flex-col items-end gap-4 shrink-0 pt-1">
+                <div className="text-right">
+                  <p className="text-3xl font-semibold tracking-tight text-foreground">
+                    ${data.revenueAttributed.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Revenue Attributed</p>
+                </div>
+                <div className="flex items-center gap-5">
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-foreground">{data.totalCustomers}</p>
+                    <p className="text-[11px] text-muted-foreground/70">Customers</p>
+                  </div>
+                  <div className="w-px h-8 bg-border" />
+                  <div className="text-right">
+                    <p className="text-lg font-semibold text-foreground">{data.campaignsSent}</p>
+                    <p className="text-[11px] text-muted-foreground/70">Campaigns Sent</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </FadeIn>
 

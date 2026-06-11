@@ -2,15 +2,15 @@ import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  approved: "bg-blue-50 text-blue-700",
-  sent: "bg-emerald-50 text-emerald-700",
-  pending: "bg-amber-50 text-amber-700",
-  delivered: "bg-emerald-50 text-emerald-700",
-  failed: "bg-red-50 text-red-700",
-  opened: "bg-indigo-50 text-indigo-700",
-  read: "bg-indigo-50 text-indigo-700",
-  clicked: "bg-purple-50 text-purple-700",
-  purchased: "bg-teal-50 text-teal-700",
+  approved: "bg-[var(--status-approved-bg)] text-[var(--status-approved-text)]",
+  sent: "bg-[var(--status-sent-bg)] text-[var(--status-sent-text)]",
+  pending: "bg-[var(--status-pending-bg)] text-[var(--status-pending-text)]",
+  delivered: "bg-[var(--status-delivered-bg)] text-[var(--status-delivered-text)]",
+  failed: "bg-[var(--status-failed-bg)] text-[var(--status-failed-text)]",
+  opened: "bg-[var(--status-opened-bg)] text-[var(--status-opened-text)]",
+  read: "bg-[var(--status-read-bg)] text-[var(--status-read-text)]",
+  clicked: "bg-[var(--status-clicked-bg)] text-[var(--status-clicked-text)]",
+  purchased: "bg-[var(--status-purchased-bg)] text-[var(--status-purchased-text)]",
 };
 
 export function StatusBadge({ status }: { status: string }) {

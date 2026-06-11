@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import {
   LayoutDashboard,
   Users,
@@ -57,8 +58,9 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-border px-5 py-3">
+      <div className="border-t border-border px-4 py-3 flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground/60">GrowthPilot AI v0.1</p>
+        <ThemeToggle />
       </div>
     </aside>
   );

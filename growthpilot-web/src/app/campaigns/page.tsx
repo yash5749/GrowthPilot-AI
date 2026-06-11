@@ -223,18 +223,23 @@ export default function CampaignsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Button variant="ghost" size="xs" onClick={() => router.push(`/campaigns/${c.id}`)}>
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={() => router.push(`/campaigns/${c.id}`)}
+                      className="active:scale-95 transition-all"
+                    >
                       <Eye className="size-3 mr-1" />
                       View
                     </Button>
                     {c.status === "draft" && (
-                      <Button size="xs" onClick={() => handleApprove(c.id)}>
+                      <Button size="xs" onClick={() => handleApprove(c.id)} className="active:scale-95 transition-all">
                         <Check className="size-3 mr-1" />
                         Approve
                       </Button>
                     )}
                     {c.status === "approved" && (
-                      <Button size="xs" onClick={() => handleSend(c.id)}>
+                      <Button size="xs" onClick={() => handleSend(c.id)} className="active:scale-95 transition-all">
                         <Send className="size-3 mr-1" />
                         Send
                       </Button>

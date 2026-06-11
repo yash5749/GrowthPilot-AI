@@ -29,7 +29,7 @@ export function MetricCard({ label, value, icon, trend, subtitle, className }: M
             <p
               className={cn(
                 "mt-1 text-xs font-medium",
-                trend.positive ? "text-green-600" : "text-red-600"
+                trend.positive ? "text-[var(--trend-positive)]" : "text-[var(--trend-negative)]"
               )}
             >
               <span>{trend.positive ? "↑" : "↓"}</span> {trend.value}

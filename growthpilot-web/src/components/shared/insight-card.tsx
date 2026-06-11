@@ -8,14 +8,14 @@ const variantStyles = {
     icon: "text-muted-foreground",
   },
   insight: {
-    border: "border-blue-200",
-    bg: "bg-blue-50/40",
-    icon: "text-blue-600",
+    border: "border-[var(--insight-border)]",
+    bg: "bg-[var(--insight-bg)]",
+    icon: "text-[var(--insight-icon)]",
   },
   action: {
-    border: "border-emerald-200",
-    bg: "bg-emerald-50/40",
-    icon: "text-emerald-600",
+    border: "border-[var(--action-border)]",
+    bg: "bg-[var(--action-bg)]",
+    icon: "text-[var(--action-icon)]",
   },
   metric: {
     border: "border-border",
