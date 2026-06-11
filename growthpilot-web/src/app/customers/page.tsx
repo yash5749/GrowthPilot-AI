@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { Customer } from "@/lib/types";
+import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
-import { Search, ChevronLeft, ChevronRight, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, ChevronLeft, ChevronRight, Users, ShoppingCart, DollarSign, MapPin } from "lucide-react";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -18,6 +18,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Customer | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
@@ -38,175 +39,190 @@ export default function CustomersPage() {
   }, [fetchCustomers]);
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Customers</h1>
-      </div>
+    <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+      <PageHeader
+        title="Customers"
+        description={`${meta.total} customer${meta.total !== 1 ? "s" : ""} imported`}
+      />
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="relative max-w-xs">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#a1a1a1]" />
         <Input
           placeholder="Search customers..."
-          className="pl-9"
+          className="h-9 pl-9 text-xs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       {error && (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <p>{error}</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-[#ebebeb] bg-white p-8 text-center">
+          <p className="text-sm text-[#888888]">{error}</p>
+        </div>
       )}
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-12 rounded-lg bg-muted animate-pulse" />
+            <div key={i} className="h-12 rounded-lg bg-[#ebebeb] animate-pulse" />
           ))}
         </div>
       ) : !error && customers.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <Users className="h-8 w-8 mx-auto mb-2" />
-            <p>No customers found.</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<Users className="size-5" />}
+          title="No customers found"
+          description={search ? "Try a different search term." : "Import customer data to get started."}
+        />
       ) : (
         <>
-          <Card>
+          <div className="overflow-hidden rounded-xl border border-[#ebebeb] bg-white">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>Orders</TableHead>
-                  <TableHead>Total Spent</TableHead>
-                  <TableHead></TableHead>
+                <TableRow className="border-b border-[#ebebeb]">
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3 pl-5">Name</TableHead>
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Email</TableHead>
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">City</TableHead>
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Orders</TableHead>
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Total Spent</TableHead>
+                  <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3 pr-5"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {customers.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.email}</TableCell>
-                    <TableCell>{c.city || "—"}</TableCell>
-                    <TableCell>{c.metrics?.orderCount ?? c.orders?.length ?? 0}</TableCell>
-                    <TableCell>${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      <Sheet>
-                        <SheetTrigger render={<Button variant="ghost" size="sm" onClick={() => setSelected(c)} />}>
-                          View
-                        </SheetTrigger>
-                        <SheetContent className="w-[500px] sm:max-w-lg overflow-y-auto">
-                          {selected && selected.id === c.id && (
-                            <>
-                              <SheetHeader>
-                                <SheetTitle>{selected.name}</SheetTitle>
-                              </SheetHeader>
-                              <div className="mt-6 space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">Email</p>
-                                    <p className="font-medium">{selected.email}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">Phone</p>
-                                    <p className="font-medium">{selected.phone || "—"}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">City</p>
-                                    <p className="font-medium">{selected.city || "—"}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-muted-foreground">Created</p>
-                                    <p className="font-medium">{new Date(selected.createdAt).toLocaleDateString()}</p>
-                                  </div>
-                                </div>
-                                {selected.metrics && (
-                                  <div className="border-t pt-4">
-                                    <h4 className="text-sm font-semibold mb-3">Metrics</h4>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div className="p-3 rounded-lg bg-muted/50">
-                                        <p className="text-xs text-muted-foreground">Total Spent</p>
-                                        <p className="text-lg font-bold">${selected.metrics.totalSpent.toFixed(2)}</p>
-                                      </div>
-                                      <div className="p-3 rounded-lg bg-muted/50">
-                                        <p className="text-xs text-muted-foreground">Orders</p>
-                                        <p className="text-lg font-bold">{selected.metrics.orderCount}</p>
-                                      </div>
-                                      <div className="p-3 rounded-lg bg-muted/50">
-                                        <p className="text-xs text-muted-foreground">Avg Order Value</p>
-                                        <p className="text-lg font-bold">${selected.metrics.averageOrderValue.toFixed(2)}</p>
-                                      </div>
-                                      <div className="p-3 rounded-lg bg-muted/50">
-                                        <p className="text-xs text-muted-foreground">Last Order</p>
-                                        <p className="text-lg font-bold">
-                                          {selected.metrics.lastOrderAt
-                                            ? new Date(selected.metrics.lastOrderAt).toLocaleDateString()
-                                            : "—"}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                                {selected.orders && selected.orders.length > 0 && (
-                                  <div className="border-t pt-4">
-                                    <h4 className="text-sm font-semibold mb-3">Recent Orders</h4>
-                                    <div className="space-y-2">
-                                      {selected.orders.slice(0, 5).map((o) => (
-                                        <div key={o.id} className="flex justify-between items-center p-2 rounded border">
-                                          <div>
-                                            <p className="text-sm font-medium">${o.orderTotal.toFixed(2)}</p>
-                                            <p className="text-xs text-muted-foreground">{o.channel} · {o.status}</p>
-                                          </div>
-                                          <p className="text-xs text-muted-foreground">
-                                            {new Date(o.orderedAt).toLocaleDateString()}
-                                          </p>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </SheetContent>
-                      </Sheet>
+                  <TableRow key={c.id} className="border-b border-[#ebebeb]">
+                    <TableCell className="py-3 pl-5">
+                      <span className="text-xs font-medium text-[#171717]">{c.name}</span>
+                    </TableCell>
+                    <TableCell className="py-3 text-xs text-[#888888]">{c.email}</TableCell>
+                    <TableCell className="py-3 text-xs text-[#888888]">{c.city || "—"}</TableCell>
+                    <TableCell className="py-3 text-xs font-medium text-[#171717]">{c.metrics?.orderCount ?? c.orders?.length ?? 0}</TableCell>
+                    <TableCell className="py-3 text-xs font-medium text-[#171717]">${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
+                    <TableCell className="py-3 pr-5 text-right">
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => {
+                          setSelected(c);
+                          setSheetOpen(true);
+                        }}
+                      >
+                        View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </Card>
+          </div>
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>{meta.total} customer{meta.total !== 1 ? "s" : ""}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[#a1a1a1]">
+              Page {meta.page} of {meta.totalPages}
+            </p>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size="xs"
                 disabled={meta.page <= 1}
                 onClick={() => fetchCustomers(meta.page - 1)}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-3" />
               </Button>
-              <span>Page {meta.page} of {meta.totalPages}</span>
               <Button
                 variant="outline"
-                size="sm"
+                size="xs"
                 disabled={meta.page >= meta.totalPages}
                 onClick={() => fetchCustomers(meta.page + 1)}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="size-3" />
               </Button>
             </div>
           </div>
         </>
       )}
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="w-[500px] sm:max-w-lg overflow-y-auto">
+          {selected && (
+            <>
+              <SheetHeader className="border-b border-[#ebebeb] pb-4">
+                <SheetTitle className="text-sm font-semibold text-[#171717]">{selected.name}</SheetTitle>
+              </SheetHeader>
+              <div className="mt-5 space-y-6">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <p className="text-[11px] font-medium tracking-wide text-[#888888] uppercase">Email</p>
+                    <p className="mt-1 text-xs text-[#171717]">{selected.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium tracking-wide text-[#888888] uppercase">Phone</p>
+                    <p className="mt-1 text-xs text-[#171717]">{selected.phone || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium tracking-wide text-[#888888] uppercase">City</p>
+                    <p className="mt-1 text-xs text-[#171717]">{selected.city || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium tracking-wide text-[#888888] uppercase">Created</p>
+                    <p className="mt-1 text-xs text-[#171717]">{new Date(selected.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                {selected.metrics && (
+                  <div className="border-t border-[#ebebeb] pt-5">
+                    <h4 className="text-xs font-medium text-[#171717] mb-4">Metrics</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4">
+                        <DollarSign className="size-3.5 text-[#888888] mb-2" />
+                        <p className="text-[11px] text-[#888888]">Total Spent</p>
+                        <p className="mt-0.5 text-sm font-semibold text-[#171717]">${selected.metrics.totalSpent.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4">
+                        <ShoppingCart className="size-3.5 text-[#888888] mb-2" />
+                        <p className="text-[11px] text-[#888888]">Orders</p>
+                        <p className="mt-0.5 text-sm font-semibold text-[#171717]">{selected.metrics.orderCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4">
+                        <DollarSign className="size-3.5 text-[#888888] mb-2" />
+                        <p className="text-[11px] text-[#888888]">Avg Order Value</p>
+                        <p className="mt-0.5 text-sm font-semibold text-[#171717]">${selected.metrics.averageOrderValue.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4">
+                        <MapPin className="size-3.5 text-[#888888] mb-2" />
+                        <p className="text-[11px] text-[#888888]">Last Order</p>
+                        <p className="mt-0.5 text-sm font-semibold text-[#171717]">
+                          {selected.metrics.lastOrderAt
+                            ? new Date(selected.metrics.lastOrderAt).toLocaleDateString()
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selected.orders && selected.orders.length > 0 && (
+                  <div className="border-t border-[#ebebeb] pt-5">
+                    <h4 className="text-xs font-medium text-[#171717] mb-3">Recent Orders</h4>
+                    <div className="space-y-2">
+                      {selected.orders.slice(0, 5).map((o) => (
+                        <div key={o.id} className="flex items-center justify-between rounded-lg border border-[#ebebeb] p-3">
+                          <div>
+                            <p className="text-xs font-medium text-[#171717]">${o.orderTotal.toFixed(2)}</p>
+                            <p className="text-[11px] text-[#888888]">{o.channel} · {o.status}</p>
+                          </div>
+                          <p className="text-[11px] text-[#888888]">
+                            {new Date(o.orderedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

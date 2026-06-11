@@ -24,36 +24,38 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r bg-sidebar flex flex-col h-screen sticky top-0">
-      <div className="p-6 border-b">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Rocket className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-lg">GrowthPilot</span>
-        </Link>
+    <aside className="flex h-screen w-56 shrink-0 flex-col border-r border-[#ebebeb] bg-white sticky top-0">
+      <div className="flex items-center gap-2.5 border-b border-[#ebebeb] px-5 py-4">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-[#171717] text-white">
+          <Rocket className="size-4" />
+        </div>
+        <span className="text-sm font-semibold tracking-tight text-[#171717]">
+          GrowthPilot
+        </span>
       </div>
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 space-y-0.5 px-3 py-4">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "relative flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  ? "bg-[#f5f5f5] text-[#171717] before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-[#171717]"
+                  : "text-[#888888] hover:bg-[#f5f5f5] hover:text-[#171717]"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="size-4 shrink-0" />
               {item.label}
             </Link>
           );
         })}
       </nav>
-      <div className="p-4 border-t text-xs text-muted-foreground">
-        GrowthPilot AI v0.1
+      <div className="border-t border-[#ebebeb] px-5 py-3">
+        <p className="text-[11px] text-[#a1a1a1]">GrowthPilot AI v0.1</p>
       </div>
     </aside>
   );

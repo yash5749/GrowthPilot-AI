@@ -4,9 +4,20 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { DashboardAnalytics } from "@/lib/types";
 import { MetricCard } from "@/components/shared/metric-card";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Users, ShoppingCart, Tags, Send, DollarSign, TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
+import {
+  Users,
+  ShoppingCart,
+  Tags,
+  Send,
+  TrendingUp,
+  DollarSign,
+  Sparkles,
+  Plus,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardAnalytics | null>(null);
@@ -23,12 +34,16 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
+      <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+        <div className="h-7 w-48 rounded-md bg-[#ebebeb] animate-pulse" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-[#ebebeb] animate-pulse" />
           ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="h-64 rounded-xl bg-[#ebebeb] animate-pulse" />
+          <div className="h-64 rounded-xl bg-[#ebebeb] animate-pulse" />
         </div>
       </div>
     );
@@ -36,14 +51,12 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <p>Failed to load dashboard data.</p>
-            <p className="text-sm">{error}</p>
-          </CardContent>
-        </Card>
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <PageHeader title="Dashboard" />
+        <div className="mt-6 rounded-xl border border-[#ebebeb] bg-white p-8 text-center">
+          <p className="text-sm text-[#888888]">Failed to load dashboard data.</p>
+          <p className="mt-1 text-xs text-[#a1a1a1]">{error}</p>
+        </div>
       </div>
     );
   }
@@ -52,88 +65,166 @@ export default function DashboardPage() {
 
   const { aggregateCounters: c, rates: r } = data;
 
+  const funnelSteps = [
+    { label: "Sent", value: c.sentCount, total: c.sentCount || 1 },
+    { label: "Delivered", value: c.deliveredCount, total: c.sentCount || 1 },
+    { label: "Opened", value: c.openedCount, total: c.deliveredCount || 1 },
+    { label: "Clicked", value: c.clickedCount, total: c.openedCount || 1 },
+    { label: "Purchased", value: c.purchasedCount, total: c.clickedCount || 1 },
+  ];
+
+  const ratesData = [
+    { label: "Delivery Rate", value: r.deliveryRate },
+    { label: "Open Rate", value: r.openRate },
+    { label: "Click Rate", value: r.clickRate },
+    { label: "Conversion Rate", value: r.conversionRate },
+  ];
+
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Revenue Attributed: <span className="font-semibold">${data.revenueAttributed.toLocaleString()}</span>
-        </p>
+    <div className="mx-auto max-w-6xl px-6 py-8 space-y-8">
+      <PageHeader
+        title="Dashboard"
+        description="Campaign performance at a glance"
+        actions={
+          <Link href="/campaigns">
+            <Button size="sm">
+              <Plus className="size-3.5 mr-1.5" />
+              New Campaign
+            </Button>
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          label="Total Customers"
+          value={data.totalCustomers}
+          icon={<Users className="size-4" />}
+        />
+        <MetricCard
+          label="Total Orders"
+          value={data.totalOrders}
+          icon={<ShoppingCart className="size-4" />}
+        />
+        <MetricCard
+          label="Active Segments"
+          value={data.activeSegments}
+          icon={<Tags className="size-4" />}
+        />
+        <MetricCard
+          label="Campaigns Sent"
+          value={data.campaignsSent}
+          icon={<Send className="size-4" />}
+        />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total Customers" value={data.totalCustomers} icon={<Users className="h-4 w-4" />} />
-        <MetricCard label="Total Orders" value={data.totalOrders} icon={<ShoppingCart className="h-4 w-4" />} />
-        <MetricCard label="Active Segments" value={data.activeSegments} icon={<Tags className="h-4 w-4" />} />
-        <MetricCard label="Campaigns Sent" value={data.campaignsSent} icon={<Send className="h-4 w-4" />} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Campaign Performance</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              { label: "Sent", value: c.sentCount, total: c.sentCount || 1, color: "bg-blue-500" },
-              { label: "Delivered", value: c.deliveredCount, total: c.sentCount || 1, color: "bg-green-500" },
-              { label: "Opened", value: c.openedCount, total: c.deliveredCount || 1, color: "bg-indigo-500" },
-              { label: "Clicked", value: c.clickedCount, total: c.openedCount || 1, color: "bg-purple-500" },
-              { label: "Purchased", value: c.purchasedCount, total: c.clickedCount || 1, color: "bg-emerald-500" },
-            ].map((item) => (
-              <div key={item.label} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>{item.label}</span>
-                  <span className="font-medium">{item.value}</span>
-                </div>
-                <Progress value={(item.value / item.total) * 100} className={item.color} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Conversion Rates</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              { label: "Delivery Rate", value: r.deliveryRate, icon: TrendingUp },
-              { label: "Open Rate", value: r.openRate, icon: TrendingUp },
-              { label: "Click Rate", value: r.clickRate, icon: TrendingUp },
-              { label: "Conversion Rate", value: r.conversionRate, icon: DollarSign },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-2 border-b last:border-0">
-                <span className="text-sm">{item.label}</span>
-                <span className="text-lg font-bold">{(item.value * 100).toFixed(1)}%</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Event Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-            {[
-              { label: "Sent", value: c.sentCount },
-              { label: "Delivered", value: c.deliveredCount },
-              { label: "Failed", value: c.failedCount },
-              { label: "Opened", value: c.openedCount },
-              { label: "Clicked", value: c.clickedCount },
-              { label: "Purchased", value: c.purchasedCount },
-            ].map((item) => (
-              <div key={item.label} className="text-center p-3 rounded-lg bg-muted/50">
-                <p className="text-xl font-bold">{item.value}</p>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="rounded-xl border border-[#ebebeb] bg-white">
+            <div className="border-b border-[#ebebeb] px-5 py-4">
+              <h2 className="text-sm font-medium text-[#171717]">Campaign Funnel</h2>
+            </div>
+            <div className="p-5 space-y-4">
+              {funnelSteps.map((step, i) => {
+                const pct = Math.min(100, (step.value / step.total) * 100);
+                return (
+                  <div key={step.label} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-[#4d4d4d]">{step.label}</span>
+                      <span className="font-semibold text-[#171717]">{step.value}</span>
+                    </div>
+                    <div className="relative h-2 overflow-hidden rounded-full bg-[#f5f5f5]">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-[#171717] transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="rounded-xl border border-[#ebebeb] bg-white">
+            <div className="border-b border-[#ebebeb] px-5 py-4">
+              <h2 className="text-sm font-medium text-[#171717]">Event Breakdown</h2>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-[#ebebeb]">
+              {[
+                { label: "Sent", value: c.sentCount },
+                { label: "Delivered", value: c.deliveredCount },
+                { label: "Failed", value: c.failedCount },
+                { label: "Opened", value: c.openedCount },
+                { label: "Clicked", value: c.clickedCount },
+                { label: "Purchased", value: c.purchasedCount },
+              ].map((item) => (
+                <div key={item.label} className="px-4 py-5 text-center">
+                  <p className="text-lg font-semibold text-[#171717]">{item.value}</p>
+                  <p className="mt-0.5 text-[11px] font-medium tracking-wide text-[#888888] uppercase">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-xl border border-[#ebebeb] bg-white">
+            <div className="border-b border-[#ebebeb] px-5 py-4">
+              <h2 className="text-sm font-medium text-[#171717]">Conversion Rates</h2>
+            </div>
+            <div className="divide-y divide-[#ebebeb]">
+              {ratesData.map((item) => (
+                <div key={item.label} className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-xs text-[#4d4d4d]">{item.label}</span>
+                  <span className="text-sm font-semibold text-[#171717]">
+                    {(item.value * 100).toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-[#ebebeb] bg-white">
+            <div className="border-b border-[#ebebeb] px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-3.5 text-[#888888]" />
+                <h2 className="text-sm font-medium text-[#171717]">AI Snapshot</h2>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#888888]">Revenue Attributed</span>
+                  <span className="font-semibold text-[#171717]">
+                    ${data.revenueAttributed.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#888888]">Best Rate</span>
+                  <span className="font-semibold text-[#171717]">
+                    {(Math.max(r.deliveryRate, r.openRate, r.clickRate, r.conversionRate) * 100).toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#888888]">Total Events</span>
+                  <span className="font-semibold text-[#171717]">
+                    {c.sentCount + c.deliveredCount + c.openedCount + c.clickedCount + c.purchasedCount}
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/campaigns"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#171717] hover:underline"
+              >
+                View campaign details
+                <ArrowRight className="size-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

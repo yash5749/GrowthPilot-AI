@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
 
-interface MetricCardProps {
+interface StatCardProps {
   label: string;
   value: string | number;
   icon?: React.ReactNode;
   trend?: { value: string; positive: boolean };
+  subtitle?: string;
   className?: string;
 }
 
-export function MetricCard({ label, value, icon, trend, className }: MetricCardProps) {
+export function StatCard({ label, value, icon, trend, subtitle, className }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -33,6 +34,9 @@ export function MetricCard({ label, value, icon, trend, className }: MetricCardP
             >
               <span>{trend.positive ? "↑" : "↓"}</span> {trend.value}
             </p>
+          )}
+          {subtitle && (
+            <p className="mt-1 text-xs text-[#888888]">{subtitle}</p>
           )}
         </div>
         {icon && (

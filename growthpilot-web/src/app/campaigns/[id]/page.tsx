@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Campaign, Communication, CampaignAnalytics, InsightSummary } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Check, Sparkles, Loader2 } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Send, Check, Sparkles, Loader2, ArrowLeft, MessageSquare, Users2, BarChart3 } from "lucide-react";
 import Link from "next/link";
 
 export default function CampaignDetailPage() {
@@ -23,6 +21,11 @@ export default function CampaignDetailPage() {
   const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("funnel");
+
+  const [aiInsights, setAiInsights] = useState<InsightSummary | null>(null);
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
+  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -44,10 +47,6 @@ export default function CampaignDetailPage() {
 
   useEffect(() => { fetchAll(); }, [id]);
 
-  const [aiInsights, setAiInsights] = useState<InsightSummary | null>(null);
-  const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
-  const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
-
   const handleGenerateInsights = async () => {
     setAiInsightsLoading(true);
     setAiInsightsError(null);
@@ -62,48 +61,45 @@ export default function CampaignDetailPage() {
     }
   };
 
+  const handleApprove = async () => {
+    try { await api.campaigns.approve(id); fetchAll(); }
+    catch (e: unknown) { alert(e instanceof Error ? e.message : "Failed to approve"); }
+  };
+
+  const handleSend = async () => {
+    try { await api.campaigns.send(id); fetchAll(); }
+    catch (e: unknown) { alert(e instanceof Error ? e.message : "Failed to send"); }
+  };
+
   if (loading) {
     return (
-      <div className="p-8 space-y-6">
-        <div className="h-8 w-48 rounded bg-muted animate-pulse" />
-        <div className="h-32 rounded-lg bg-muted animate-pulse" />
-        <div className="h-64 rounded-lg bg-muted animate-pulse" />
+      <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+        <div className="h-5 w-32 rounded bg-[#ebebeb] animate-pulse" />
+        <div className="h-7 w-64 rounded bg-[#ebebeb] animate-pulse" />
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 rounded-xl bg-[#ebebeb] animate-pulse" />
+          ))}
+        </div>
+        <div className="h-80 rounded-xl bg-[#ebebeb] animate-pulse" />
       </div>
     );
   }
 
   if (error || !campaign) {
     return (
-      <div className="p-8">
-        <Link href="/campaigns" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
-          <ArrowLeft className="h-3 w-3" /> Back to Campaigns
+      <div className="mx-auto max-w-6xl px-6 py-8">
+        <Link href="/campaigns" className="inline-flex items-center gap-1 text-xs text-[#888888] hover:text-[#171717] mb-4">
+          <ArrowLeft className="size-3" /> Back to Campaigns
         </Link>
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            <p>{error || "Campaign not found"}</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<Send className="size-5" />}
+          title="Campaign not found"
+          description={error || "The campaign you're looking for doesn't exist."}
+        />
       </div>
     );
   }
-
-  const handleApprove = async () => {
-    try {
-      await api.campaigns.approve(id);
-      fetchAll();
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Failed to approve");
-    }
-  };
-
-  const handleSend = async () => {
-    try {
-      await api.campaigns.send(id);
-      fetchAll();
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : "Failed to send");
-    }
-  };
 
   const eventFunnel = [
     { label: "Sent", value: analytics?.sentCount ?? communications.filter((c) => c.status !== "pending").length, total: communications.length || 1 },
@@ -114,220 +110,234 @@ export default function CampaignDetailPage() {
   ];
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-        <Link href="/campaigns" className="hover:text-foreground">Campaigns</Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">{campaign.name}</span>
-      </div>
+    <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
+      <Link href="/campaigns" className="inline-flex items-center gap-1 text-xs text-[#888888] hover:text-[#171717]">
+        <ArrowLeft className="size-3" /> Back to Campaigns
+      </Link>
 
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1.5">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{campaign.name}</h1>
+            <h1 className="text-[22px] font-semibold tracking-tight text-[#171717]">{campaign.name}</h1>
             <StatusBadge status={campaign.status} />
           </div>
-          <p className="text-muted-foreground">{campaign.objective}</p>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>Channel: {campaign.channel}</span>
+          <p className="text-sm text-[#888888]">{campaign.objective}</p>
+          <div className="flex items-center gap-4 text-xs text-[#a1a1a1]">
+            <span className="capitalize">Channel: {campaign.channel}</span>
             <span>Segment: {campaign.segment?.name || "—"}</span>
             {campaign.sentAt && <span>Sent: {new Date(campaign.sentAt).toLocaleString()}</span>}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           {campaign.status === "draft" && (
-            <Button onClick={handleApprove}>
-              <Check className="h-4 w-4 mr-2" /> Approve
+            <Button size="sm" onClick={handleApprove}>
+              <Check className="size-3.5 mr-1.5" /> Approve
             </Button>
           )}
           {campaign.status === "approved" && (
-            <Button onClick={handleSend}>
-              <Send className="h-4 w-4 mr-2" /> Send Campaign
+            <Button size="sm" onClick={handleSend}>
+              <Send className="size-3.5 mr-1.5" /> Send Campaign
             </Button>
           )}
         </div>
       </div>
 
+      <div className="rounded-xl border border-[#ebebeb] bg-white">
+        <div className="border-b border-[#ebebeb] px-5 py-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="size-3.5 text-[#888888]" />
+            <h2 className="text-xs font-medium text-[#171717]">Message Template</h2>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="rounded-lg bg-[#fafafa] p-4 text-xs font-mono whitespace-pre-wrap text-[#4d4d4d] leading-relaxed">
+            {campaign.messageTemplate}
+          </div>
+        </div>
+      </div>
+
       {analytics && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "Audience Size", value: analytics.audienceSize },
-            { label: "Delivered", value: analytics.deliveredCount },
-            { label: "Opened", value: analytics.openedCount },
-            { label: "Clicked", value: analytics.clickedCount },
-            { label: "Purchased", value: analytics.purchasedCount },
-            { label: "Revenue", value: `$${analytics.revenueAttributed.toFixed(2)}` },
+            { icon: <Users2 className="size-4" />, label: "Audience", value: analytics.audienceSize },
+            { icon: <Send className="size-4" />, label: "Delivered", value: analytics.deliveredCount },
+            { icon: <BarChart3 className="size-4" />, label: "Opened", value: analytics.openedCount },
+            { icon: <BarChart3 className="size-4" />, label: "Clicked", value: analytics.clickedCount },
+            { icon: <BarChart3 className="size-4" />, label: "Purchased", value: analytics.purchasedCount },
+            { icon: <BarChart3 className="size-4" />, label: "Revenue", value: `$${analytics.revenueAttributed.toFixed(2)}` },
           ].map((m) => (
-            <Card key={m.label}>
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground">{m.label}</p>
-                <p className="text-xl font-bold mt-1">{m.value}</p>
-              </CardContent>
-            </Card>
+            <div key={m.label} className="rounded-xl border border-[#ebebeb] bg-white p-4 text-center">
+              <div className="flex justify-center mb-2 text-[#888888]">{m.icon}</div>
+              <p className="text-lg font-semibold text-[#171717]">{m.value}</p>
+              <p className="mt-0.5 text-[11px] font-medium tracking-wide text-[#888888] uppercase">{m.label}</p>
+            </div>
           ))}
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Message Template</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-4 rounded-lg text-sm whitespace-pre-wrap font-mono">
-            {campaign.messageTemplate}
+      <div className="rounded-xl border border-[#ebebeb] bg-white">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <div className="border-b border-[#ebebeb] px-5">
+            <TabsList className="h-11 gap-6 bg-transparent">
+              <TabsTrigger
+                value="funnel"
+                className="text-xs data-[state=active]:text-[#171717] data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#171717] rounded-none bg-transparent pb-3 px-0"
+              >
+                Event Funnel
+              </TabsTrigger>
+              <TabsTrigger
+                value="recipients"
+                className="text-xs data-[state=active]:text-[#171717] data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#171717] rounded-none bg-transparent pb-3 px-0"
+              >
+                Recipients ({communications.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="insights"
+                className="text-xs data-[state=active]:text-[#171717] data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#171717] rounded-none bg-transparent pb-3 px-0"
+              >
+                <Sparkles className="size-3 mr-1" />
+                AI Insights
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </CardContent>
-      </Card>
 
-      <Tabs defaultValue="funnel">
-        <TabsList>
-          <TabsTrigger value="funnel">Event Funnel</TabsTrigger>
-          <TabsTrigger value="recipients">Recipients ({communications.length})</TabsTrigger>
-          <TabsTrigger value="insights" className="gap-1">
-            <Sparkles className="h-3 w-3" />
-            AI Insights
-          </TabsTrigger>
-        </TabsList>
+          <div className="p-5">
+            <TabsContent value="funnel" className="mt-0 space-y-5">
+              <div className="space-y-4">
+                {eventFunnel.map((step) => {
+                  const pct = Math.min(100, (step.value / step.total) * 100);
+                  return (
+                    <div key={step.label} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-[#4d4d4d]">{step.label}</span>
+                        <span className="font-semibold text-[#171717]">{step.value}</span>
+                      </div>
+                      <div className="relative h-2.5 overflow-hidden rounded-full bg-[#f5f5f5]">
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-full bg-[#171717] transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-        <TabsContent value="funnel" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Campaign Funnel</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {eventFunnel.map((step) => (
-                <div key={step.label} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span>{step.label}</span>
-                    <span className="font-medium">{step.value}</span>
-                  </div>
-                  <Progress value={(step.value / step.total) * 100} />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {analytics && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Delivery Rate", value: (analytics.rates.deliveryRate * 100).toFixed(1) },
-                { label: "Open Rate", value: (analytics.rates.openRate * 100).toFixed(1) },
-                { label: "Click Rate", value: (analytics.rates.clickRate * 100).toFixed(1) },
-                { label: "Conversion Rate", value: (analytics.rates.conversionRate * 100).toFixed(1) },
-              ].map((r) => (
-                <Card key={r.label}>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs text-muted-foreground">{r.label}</p>
-                    <p className="text-2xl font-bold mt-1">{r.value}%</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="recipients" className="mt-4">
-          {communications.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <p>No communications yet. Send the campaign to see recipients.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent</TableHead>
-                    <TableHead>Delivered</TableHead>
-                    <TableHead>Opened</TableHead>
-                    <TableHead>Clicked</TableHead>
-                    <TableHead>Purchased</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {communications.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <p className="font-medium">{c.customer?.name || "—"}</p>
-                        <p className="text-xs text-muted-foreground">{c.customer?.email}</p>
-                      </TableCell>
-                      <TableCell><StatusBadge status={c.status} /></TableCell>
-                      <TableCell>{c.sentAt ? new Date(c.sentAt).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell>{c.deliveredAt ? new Date(c.deliveredAt).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell>{c.openedAt ? new Date(c.openedAt).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell>{c.clickedAt ? new Date(c.clickedAt).toLocaleDateString() : "—"}</TableCell>
-                      <TableCell>{c.purchasedAt ? new Date(c.purchasedAt).toLocaleDateString() : "—"}</TableCell>
-                    </TableRow>
+              {analytics && (
+                <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+                  {[
+                    { label: "Delivery Rate", value: analytics.rates.deliveryRate },
+                    { label: "Open Rate", value: analytics.rates.openRate },
+                    { label: "Click Rate", value: analytics.rates.clickRate },
+                    { label: "Conversion Rate", value: analytics.rates.conversionRate },
+                  ].map((r) => (
+                    <div key={r.label} className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4 text-center">
+                      <p className="text-xs text-[#888888]">{r.label}</p>
+                      <p className="mt-1 text-xl font-semibold text-[#171717]">
+                        {(r.value * 100).toFixed(1)}%
+                      </p>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
-        </TabsContent>
+                </div>
+              )}
+            </TabsContent>
 
-        <TabsContent value="insights" className="mt-4 space-y-4">
-          <Card>
-            <CardContent className="p-6">
+            <TabsContent value="recipients" className="mt-0">
+              {communications.length === 0 ? (
+                <div className="py-12 text-center text-xs text-[#888888]">
+                  No communications yet. Send the campaign to see recipients.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-[#ebebeb]">
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Customer</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Status</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Sent</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Delivered</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Opened</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Clicked</TableHead>
+                        <TableHead className="text-[11px] font-medium text-[#888888] uppercase tracking-wider py-3">Purchased</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {communications.map((c) => (
+                        <TableRow key={c.id} className="border-b border-[#ebebeb]">
+                          <TableCell className="py-3">
+                            <p className="text-xs font-medium text-[#171717]">{c.customer?.name || "—"}</p>
+                            <p className="text-[11px] text-[#888888]">{c.customer?.email}</p>
+                          </TableCell>
+                          <TableCell className="py-3"><StatusBadge status={c.status} /></TableCell>
+                          <TableCell className="py-3 text-xs text-[#888888]">{c.sentAt ? new Date(c.sentAt).toLocaleDateString() : "—"}</TableCell>
+                          <TableCell className="py-3 text-xs text-[#888888]">{c.deliveredAt ? new Date(c.deliveredAt).toLocaleDateString() : "—"}</TableCell>
+                          <TableCell className="py-3 text-xs text-[#888888]">{c.openedAt ? new Date(c.openedAt).toLocaleDateString() : "—"}</TableCell>
+                          <TableCell className="py-3 text-xs text-[#888888]">{c.clickedAt ? new Date(c.clickedAt).toLocaleDateString() : "—"}</TableCell>
+                          <TableCell className="py-3 text-xs text-[#888888]">{c.purchasedAt ? new Date(c.purchasedAt).toLocaleDateString() : "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="insights" className="mt-0">
               {!aiInsights && !aiInsightsLoading && !aiInsightsError && (
-                <div className="text-center space-y-3">
-                  <Sparkles className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Generate AI-powered insights for this campaign.</p>
-                  <Button onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
+                <div className="py-12 text-center space-y-3">
+                  <Sparkles className="size-8 mx-auto text-[#a1a1a1]" />
+                  <p className="text-sm text-[#888888]">Generate AI-powered insights for this campaign.</p>
+                  <Button size="sm" onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
                     {aiInsightsLoading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="size-3.5 mr-1.5 animate-spin" />
                     ) : (
-                      <Sparkles className="h-4 w-4 mr-2" />
+                      <Sparkles className="size-3.5 mr-1.5" />
                     )}
                     Generate Insights
                   </Button>
                 </div>
               )}
               {aiInsightsLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="size-6 animate-spin text-[#888888]" />
                 </div>
               )}
               {aiInsightsError && (
-                <div className="text-center">
-                  <p className="text-sm text-destructive">{aiInsightsError}</p>
-                  <Button variant="outline" size="sm" onClick={handleGenerateInsights} className="mt-3">
-                    Retry
-                  </Button>
+                <div className="py-12 text-center">
+                  <p className="text-xs text-red-600">{aiInsightsError}</p>
+                  <Button variant="outline" size="xs" onClick={handleGenerateInsights} className="mt-3">Retry</Button>
                 </div>
               )}
               {aiInsights && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <h3 className="font-semibold">AI Campaign Analysis</h3>
+                    <Sparkles className="size-4 text-[#171717]" />
+                    <h3 className="text-xs font-semibold text-[#171717]">AI Campaign Analysis</h3>
                   </div>
-                  <div className="space-y-3">
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Summary</p>
-                      <p className="text-sm">{aiInsights.summary}</p>
+                  <div className="grid gap-3">
+                    <div className="rounded-lg border border-[#ebebeb] bg-[#fafafa] p-4">
+                      <p className="text-[11px] font-medium text-[#888888] tracking-wide uppercase mb-1">Summary</p>
+                      <p className="text-xs text-[#4d4d4d] leading-relaxed">{aiInsights.summary}</p>
                     </div>
-                    <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Key Insight</p>
-                      <p className="text-sm">{aiInsights.insight}</p>
+                    <div className="rounded-lg border border-[#d3e5ff] bg-[#d3e5ff]/10 p-4">
+                      <p className="text-[11px] font-medium text-[#888888] tracking-wide uppercase mb-1">Key Insight</p>
+                      <p className="text-xs text-[#171717] leading-relaxed">{aiInsights.insight}</p>
                     </div>
-                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wider">Next Best Action</p>
-                      <p className="text-sm font-medium">{aiInsights.nextBestAction}</p>
+                    <div className="rounded-lg border border-[#e0f2f1] bg-[#e0f2f1]/30 p-4">
+                      <p className="text-[11px] font-medium text-[#888888] tracking-wide uppercase mb-1">Next Best Action</p>
+                      <p className="text-xs font-medium text-[#171717]">{aiInsights.nextBestAction}</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
-                    <Sparkles className="h-3 w-3 mr-1" />
+                  <Button variant="outline" size="xs" onClick={handleGenerateInsights} disabled={aiInsightsLoading}>
+                    <Sparkles className="size-3 mr-1" />
                     Refresh
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }
