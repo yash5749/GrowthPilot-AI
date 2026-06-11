@@ -5,6 +5,10 @@ import { api } from "@/lib/api";
 import type { DashboardAnalytics } from "@/lib/types";
 import { MetricCard } from "@/components/shared/metric-card";
 import { PageHeader } from "@/components/shared/page-header";
+import { SectionCard } from "@/components/shared/section-card";
+import { InsightCard } from "@/components/shared/insight-card";
+import { FunnelStepBar } from "@/components/shared/funnel-step-bar";
+import { CTABanner } from "@/components/shared/cta-banner";
 import {
   Users,
   ShoppingCart,
@@ -35,15 +39,21 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
-        <div className="h-7 w-48 rounded-md bg-[#ebebeb] animate-pulse" />
+        <div className="h-7 w-48 rounded-md bg-muted animate-pulse" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-xl bg-[#ebebeb] animate-pulse" />
+            <div key={i} className="h-28 rounded-xl bg-muted animate-pulse" />
           ))}
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="h-64 rounded-xl bg-[#ebebeb] animate-pulse" />
-          <div className="h-64 rounded-xl bg-[#ebebeb] animate-pulse" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="h-64 rounded-xl bg-muted animate-pulse" />
+            <div className="h-40 rounded-xl bg-muted animate-pulse" />
+          </div>
+          <div className="space-y-6">
+            <div className="h-52 rounded-xl bg-muted animate-pulse" />
+            <div className="h-48 rounded-xl bg-muted animate-pulse" />
+          </div>
         </div>
       </div>
     );
@@ -53,9 +63,9 @@ export default function DashboardPage() {
     return (
       <div className="mx-auto max-w-6xl px-6 py-8">
         <PageHeader title="Dashboard" />
-        <div className="mt-6 rounded-xl border border-[#ebebeb] bg-white p-8 text-center">
-          <p className="text-sm text-[#888888]">Failed to load dashboard data.</p>
-          <p className="mt-1 text-xs text-[#a1a1a1]">{error}</p>
+        <div className="mt-6 rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">Failed to load dashboard data.</p>
+          <p className="mt-1 text-xs text-muted-foreground/60">{error}</p>
         </div>
       </div>
     );
@@ -120,36 +130,12 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-xl border border-[#ebebeb] bg-white">
-            <div className="border-b border-[#ebebeb] px-5 py-4">
-              <h2 className="text-sm font-medium text-[#171717]">Campaign Funnel</h2>
-            </div>
-            <div className="p-5 space-y-4">
-              {funnelSteps.map((step, i) => {
-                const pct = Math.min(100, (step.value / step.total) * 100);
-                return (
-                  <div key={step.label} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-[#4d4d4d]">{step.label}</span>
-                      <span className="font-semibold text-[#171717]">{step.value}</span>
-                    </div>
-                    <div className="relative h-2 overflow-hidden rounded-full bg-[#f5f5f5]">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full bg-[#171717] transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <SectionCard title="Campaign Funnel">
+            <FunnelStepBar steps={funnelSteps} />
+          </SectionCard>
 
-          <div className="rounded-xl border border-[#ebebeb] bg-white">
-            <div className="border-b border-[#ebebeb] px-5 py-4">
-              <h2 className="text-sm font-medium text-[#171717]">Event Breakdown</h2>
-            </div>
-            <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-[#ebebeb]">
+          <SectionCard title="Event Breakdown">
+            <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-border">
               {[
                 { label: "Sent", value: c.sentCount },
                 { label: "Delivered", value: c.deliveredCount },
@@ -159,72 +145,75 @@ export default function DashboardPage() {
                 { label: "Purchased", value: c.purchasedCount },
               ].map((item) => (
                 <div key={item.label} className="px-4 py-5 text-center">
-                  <p className="text-lg font-semibold text-[#171717]">{item.value}</p>
-                  <p className="mt-0.5 text-[11px] font-medium tracking-wide text-[#888888] uppercase">
+                  <p className="text-lg font-semibold text-foreground">{item.value}</p>
+                  <p className="mt-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
                     {item.label}
                   </p>
                 </div>
               ))}
             </div>
-          </div>
+          </SectionCard>
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-[#ebebeb] bg-white">
-            <div className="border-b border-[#ebebeb] px-5 py-4">
-              <h2 className="text-sm font-medium text-[#171717]">Conversion Rates</h2>
-            </div>
-            <div className="divide-y divide-[#ebebeb]">
+          <SectionCard title="Conversion Rates">
+            <div className="divide-y divide-border">
               {ratesData.map((item) => (
-                <div key={item.label} className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-xs text-[#4d4d4d]">{item.label}</span>
-                  <span className="text-sm font-semibold text-[#171717]">
+                <div key={item.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <span className="text-sm font-semibold text-foreground">
                     {(item.value * 100).toFixed(1)}%
                   </span>
                 </div>
               ))}
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="rounded-xl border border-[#ebebeb] bg-white">
-            <div className="border-b border-[#ebebeb] px-5 py-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-3.5 text-[#888888]" />
-                <h2 className="text-sm font-medium text-[#171717]">AI Snapshot</h2>
-              </div>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#888888]">Revenue Attributed</span>
-                  <span className="font-semibold text-[#171717]">
-                    ${data.revenueAttributed.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#888888]">Best Rate</span>
-                  <span className="font-semibold text-[#171717]">
-                    {(Math.max(r.deliveryRate, r.openRate, r.clickRate, r.conversionRate) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#888888]">Total Events</span>
-                  <span className="font-semibold text-[#171717]">
-                    {c.sentCount + c.deliveredCount + c.openedCount + c.clickedCount + c.purchasedCount}
-                  </span>
-                </div>
-              </div>
+          <SectionCard
+            title="AI Snapshot"
+            icon={<Sparkles className="size-3.5" />}
+            action={
               <Link
                 href="/campaigns"
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-[#171717] hover:underline"
+                className="text-xs font-medium text-foreground hover:underline inline-flex items-center gap-1"
               >
-                View campaign details
+                View all
                 <ArrowRight className="size-3" />
               </Link>
+            }
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <InsightCard
+                  variant="metric"
+                  label="Revenue Attributed"
+                  value={`$${data.revenueAttributed.toLocaleString()}`}
+                  description="Total revenue attributed to campaign outreach"
+                />
+                <InsightCard
+                  variant="insight"
+                  label="Best Performing Rate"
+                  value={`${(Math.max(...Object.values(r)) * 100).toFixed(1)}%`}
+                  description="Highest conversion metric across all campaigns"
+                />
+              </div>
             </div>
-          </div>
+          </SectionCard>
         </div>
       </div>
+
+      <CTABanner
+        title="Ready to create a campaign?"
+        description="Launch a new outreach campaign in minutes — AI will help with copy and channel selection."
+        action={
+          <Link href="/campaigns">
+            <Button size="sm">
+              <Plus className="size-3.5 mr-1.5" />
+              New Campaign
+            </Button>
+          </Link>
+        }
+      />
     </div>
   );
 }
