@@ -1,6 +1,27 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CustomersRepository } from './customers.repository';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { parse } from 'csv-parse/sync';
+
+interface ImportRow {
+  name?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+}
+
+interface ImportError {
+  row: number;
+  message: string;
+}
+
+export interface ImportResult {
+  total: number;
+  inserted: number;
+  skipped: number;
+  failed: number;
+  errors: ImportError[];
+}
 
 @Injectable()
 export class CustomersService {
@@ -47,6 +68,75 @@ export class CustomersService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async importCsv(buffer: Buffer): Promise<ImportResult> {
+    const result: ImportResult = { total: 0, inserted: 0, skipped: 0, failed: 0, errors: [] };
+
+    let records: ImportRow[];
+    try {
+      records = parse(buffer.toString('utf-8'), {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        relax_column_count: true,
+      });
+    } catch {
+      result.failed = 1;
+      result.errors.push({ row: 0, message: 'Failed to parse CSV file. Check the file format.' });
+      return result;
+    }
+
+    if (!Array.isArray(records) || records.length === 0) {
+      return result;
+    }
+
+    result.total = records.length;
+
+    for (let i = 0; i < records.length; i++) {
+      const row = records[i];
+      const rowNum = i + 1;
+
+      if (!row.name || !row.name.trim()) {
+        result.failed++;
+        result.errors.push({ row: rowNum, message: 'Missing required field: name' });
+        continue;
+      }
+
+      if (!row.email || !row.email.trim()) {
+        result.failed++;
+        result.errors.push({ row: rowNum, message: 'Missing required field: email' });
+        continue;
+      }
+
+      const email = row.email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        result.failed++;
+        result.errors.push({ row: rowNum, message: `Invalid email format: ${row.email}` });
+        continue;
+      }
+
+      const existing = await this.repository.findByEmail(email);
+      if (existing) {
+        result.skipped++;
+        continue;
+      }
+
+      try {
+        await this.repository.create({
+          name: row.name.trim(),
+          email,
+          phone: row.phone?.trim() || undefined,
+          city: row.city?.trim() || undefined,
+        });
+        result.inserted++;
+      } catch (err: any) {
+        result.failed++;
+        result.errors.push({ row: rowNum, message: err?.message || 'Database error' });
+      }
+    }
+
+    return result;
   }
 
   async findOne(id: string) {

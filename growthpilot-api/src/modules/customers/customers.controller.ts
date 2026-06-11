@@ -1,10 +1,17 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  async importCsv(@UploadedFile() file: Express.Multer.File) {
+    return this.customersService.importCsv(file.buffer);
+  }
 
   @Post()
   async create(@Body() createCustomerDto: CreateCustomerDto) {

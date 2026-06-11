@@ -15,6 +15,20 @@ async function fetchJson<T>(
   return res.json();
 }
 
+async function uploadFile<T>(path: string, file: File): Promise<T> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`API ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
 export const api = {
   health: () => fetchJson<{ status: string }>("/health"),
 
@@ -30,6 +44,7 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    import: (file: File) => uploadFile<import("./types").ImportResult>("/customers/import", file),
   },
 
   orders: {
@@ -42,6 +57,7 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    import: (file: File) => uploadFile<import("./types").ImportResult>("/orders/import", file),
   },
 
   segments: {

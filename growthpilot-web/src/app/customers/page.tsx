@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, ChevronLeft, ChevronRight, Users, ShoppingCart, DollarSign, MapPin, Mail, Phone, Calendar } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Users, ShoppingCart, DollarSign, MapPin, Mail, Phone, Calendar, Upload } from "lucide-react";
+import { CsvImportDialog } from "@/components/shared/csv-import-dialog";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -21,6 +22,7 @@ export default function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Customer | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
@@ -46,6 +48,12 @@ export default function CustomersPage() {
         <PageHeader
           title="Customers"
           description={`${meta.total} customer${meta.total !== 1 ? "s" : ""} imported`}
+          actions={
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Upload className="size-3.5 mr-1.5" />
+              Import CSV
+            </Button>
+          }
         />
       </FadeIn>
 
@@ -146,6 +154,14 @@ export default function CustomersPage() {
           </FadeIn>
         </>
       )}
+
+      <CsvImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={(file) => api.customers.import(file)}
+        title="Import Customers"
+        description="Upload a CSV file with customer data. Expected columns: name, email, phone, city."
+      />
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="overflow-y-auto" style={{ maxWidth: "min(576px, 100vw - 2rem)" } as React.CSSProperties}>
