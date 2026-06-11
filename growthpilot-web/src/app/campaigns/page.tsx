@@ -7,6 +7,8 @@ import type { Campaign, Segment, CreateCampaignDto, MessageSuggestion, ChannelRe
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AIResultCard } from "@/components/shared/ai-result-card";
+import { FadeIn } from "@/components/shared/fade-in";
+import { PageHeaderSkeleton, CampaignCardSkeleton } from "@/components/shared/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -167,21 +169,23 @@ export default function CampaignsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 space-y-8">
-      <PageHeader
-        title="Campaigns"
-        description="Create, review, and send outreach campaigns"
-        actions={
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-3.5 mr-1.5" />
-            New Campaign
-          </Button>
-        }
-      />
+      <FadeIn>
+        <PageHeader
+          title="Campaigns"
+          description="Create, review, and send outreach campaigns"
+          actions={
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-3.5 mr-1.5" />
+              New Campaign
+            </Button>
+          }
+        />
+      </FadeIn>
 
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
+            <CampaignCardSkeleton key={i} />
           ))}
         </div>
       ) : error ? (
@@ -202,44 +206,43 @@ export default function CampaignsPage() {
         />
       ) : (
         <div className="space-y-3">
-          {campaigns.map((c) => (
-            <div
-              key={c.id}
-              className="group rounded-xl border border-border bg-card px-5 py-4 transition-all hover:shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-sm font-semibold text-foreground">{c.name}</h3>
-                    <StatusBadge status={c.status} />
+          {campaigns.map((c, i) => (
+            <FadeIn key={c.id} delay={i * 60}>
+              <div className="group rounded-xl border border-border bg-card px-5 py-4 transition-all hover:shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-sm font-semibold text-foreground">{c.name}</h3>
+                      <StatusBadge status={c.status} />
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{c.objective}</p>
+                    <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground/70">
+                      <span>Segment: {c.segment?.name || "—"}</span>
+                      <span className="capitalize">Channel: {c.channel}</span>
+                      {c.sentAt && <span>Sent: {new Date(c.sentAt).toLocaleDateString()}</span>}
+                    </div>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{c.objective}</p>
-                  <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground/70">
-                    <span>Segment: {c.segment?.name || "—"}</span>
-                    <span className="capitalize">Channel: {c.channel}</span>
-                    {c.sentAt && <span>Sent: {new Date(c.sentAt).toLocaleDateString()}</span>}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button variant="ghost" size="xs" onClick={() => router.push(`/campaigns/${c.id}`)}>
+                      <Eye className="size-3 mr-1" />
+                      View
+                    </Button>
+                    {c.status === "draft" && (
+                      <Button size="xs" onClick={() => handleApprove(c.id)}>
+                        <Check className="size-3 mr-1" />
+                        Approve
+                      </Button>
+                    )}
+                    {c.status === "approved" && (
+                      <Button size="xs" onClick={() => handleSend(c.id)}>
+                        <Send className="size-3 mr-1" />
+                        Send
+                      </Button>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button variant="ghost" size="xs" onClick={() => router.push(`/campaigns/${c.id}`)}>
-                    <Eye className="size-3 mr-1" />
-                    View
-                  </Button>
-                  {c.status === "draft" && (
-                    <Button size="xs" onClick={() => handleApprove(c.id)}>
-                      <Check className="size-3 mr-1" />
-                      Approve
-                    </Button>
-                  )}
-                  {c.status === "approved" && (
-                    <Button size="xs" onClick={() => handleSend(c.id)}>
-                      <Send className="size-3 mr-1" />
-                      Send
-                    </Button>
-                  )}
                 </div>
               </div>
-            </div>
+            </FadeIn>
           ))}
         </div>
       )}

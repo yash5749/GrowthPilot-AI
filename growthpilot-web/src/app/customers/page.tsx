@@ -5,6 +5,8 @@ import { api } from "@/lib/api";
 import type { Customer } from "@/lib/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { FadeIn } from "@/components/shared/fade-in";
+import { PageHeaderSkeleton, TableSkeleton } from "@/components/shared/loading-skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,20 +42,24 @@ export default function CustomersPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
-      <PageHeader
-        title="Customers"
-        description={`${meta.total} customer${meta.total !== 1 ? "s" : ""} imported`}
-      />
-
-      <div className="relative max-w-xs">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
-        <Input
-          placeholder="Search customers..."
-          className="h-9 pl-9 text-xs"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+      <FadeIn>
+        <PageHeader
+          title="Customers"
+          description={`${meta.total} customer${meta.total !== 1 ? "s" : ""} imported`}
         />
-      </div>
+      </FadeIn>
+
+      <FadeIn delay={50}>
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/60" />
+          <Input
+            placeholder="Search customers..."
+            className="h-9 pl-9 text-xs"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </FadeIn>
 
       {error && (
         <div className="rounded-xl border border-border bg-card p-8 text-center">
@@ -62,11 +68,7 @@ export default function CustomersPage() {
       )}
 
       {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-12 rounded-lg bg-muted animate-pulse" />
-          ))}
-        </div>
+        <TableSkeleton rows={5} cols={6} />
       ) : !error && customers.length === 0 ? (
         <EmptyState
           icon={<Users className="size-5" />}
@@ -75,69 +77,73 @@ export default function CustomersPage() {
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-b border-border">
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3 pl-5">Name</TableHead>
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Email</TableHead>
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">City</TableHead>
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Orders</TableHead>
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Total Spent</TableHead>
-                  <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3 pr-5"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customers.map((c) => (
-                  <TableRow key={c.id} className="border-b border-border">
-                    <TableCell className="py-3 pl-5">
-                      <span className="text-xs font-medium text-foreground">{c.name}</span>
-                    </TableCell>
-                    <TableCell className="py-3 text-xs text-muted-foreground">{c.email}</TableCell>
-                    <TableCell className="py-3 text-xs text-muted-foreground">{c.city || "—"}</TableCell>
-                    <TableCell className="py-3 text-xs font-medium text-foreground">{c.metrics?.orderCount ?? c.orders?.length ?? 0}</TableCell>
-                    <TableCell className="py-3 text-xs font-medium text-foreground">${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="py-3 pr-5 text-right">
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={() => {
-                          setSelected(c);
-                          setSheetOpen(true);
-                        }}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
+          <FadeIn delay={100}>
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-border">
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3 pl-5">Name</TableHead>
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Email</TableHead>
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">City</TableHead>
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Orders</TableHead>
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Total Spent</TableHead>
+                    <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3 pr-5"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground/60">
-              Page {meta.page} of {meta.totalPages}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="xs"
-                disabled={meta.page <= 1}
-                onClick={() => fetchCustomers(meta.page - 1)}
-              >
-                <ChevronLeft className="size-3" />
-              </Button>
-              <Button
-                variant="outline"
-                size="xs"
-                disabled={meta.page >= meta.totalPages}
-                onClick={() => fetchCustomers(meta.page + 1)}
-              >
-                <ChevronRight className="size-3" />
-              </Button>
+                </TableHeader>
+                <TableBody>
+                  {customers.map((c) => (
+                    <TableRow key={c.id} className="border-b border-border">
+                      <TableCell className="py-3 pl-5">
+                        <span className="text-xs font-medium text-foreground">{c.name}</span>
+                      </TableCell>
+                      <TableCell className="py-3 text-xs text-muted-foreground">{c.email}</TableCell>
+                      <TableCell className="py-3 text-xs text-muted-foreground">{c.city || "—"}</TableCell>
+                      <TableCell className="py-3 text-xs font-medium text-foreground">{c.metrics?.orderCount ?? c.orders?.length ?? 0}</TableCell>
+                      <TableCell className="py-3 text-xs font-medium text-foreground">${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
+                      <TableCell className="py-3 pr-5 text-right">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => {
+                            setSelected(c);
+                            setSheetOpen(true);
+                          }}
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </div>
+          </FadeIn>
+
+          <FadeIn delay={150}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground/60">
+                Page {meta.page} of {meta.totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={meta.page <= 1}
+                  onClick={() => fetchCustomers(meta.page - 1)}
+                >
+                  <ChevronLeft className="size-3" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={meta.page >= meta.totalPages}
+                  onClick={() => fetchCustomers(meta.page + 1)}
+                >
+                  <ChevronRight className="size-3" />
+                </Button>
+              </div>
+            </div>
+          </FadeIn>
         </>
       )}
 

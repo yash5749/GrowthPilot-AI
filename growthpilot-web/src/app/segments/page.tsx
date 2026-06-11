@@ -6,6 +6,8 @@ import type { Segment, CreateSegmentDto, SegmentSuggestion } from "@/lib/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AIResultCard } from "@/components/shared/ai-result-card";
+import { FadeIn } from "@/components/shared/fade-in";
+import { PageHeaderSkeleton, CardGridSkeleton } from "@/components/shared/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,29 +98,27 @@ export default function SegmentsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 space-y-8">
-      <PageHeader
-        title="Segments"
-        description="Define and manage audience segments"
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setAiOpen(true)}>
-              <Sparkles className="size-3.5 mr-1.5" />
-              AI Suggest
-            </Button>
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-3.5 mr-1.5" />
-              New Segment
-            </Button>
-          </div>
-        }
-      />
+      <FadeIn>
+        <PageHeader
+          title="Segments"
+          description="Define and manage audience segments"
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setAiOpen(true)}>
+                <Sparkles className="size-3.5 mr-1.5" />
+                AI Suggest
+              </Button>
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus className="size-3.5 mr-1.5" />
+                New Segment
+              </Button>
+            </div>
+          }
+        />
+      </FadeIn>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-48 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
+        <CardGridSkeleton />
       ) : error ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">{error}</p>
@@ -137,45 +137,47 @@ export default function SegmentsPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {segments.map((s) => (
-            <div key={s.id} className="flex flex-col rounded-xl border border-border bg-card transition-all hover:shadow-sm">
-              <div className="border-b border-border px-5 py-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
-                    {s.description && (
-                      <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{s.description}</p>
+          {segments.map((s, i) => (
+            <FadeIn key={s.id} delay={i * 60}>
+              <div className="flex flex-col rounded-xl border border-border bg-card transition-all hover:shadow-sm">
+                <div className="border-b border-border px-5 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
+                      {s.description && (
+                        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{s.description}</p>
+                      )}
+                    </div>
+                    {s.aiGenerated && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                        <Sparkles className="size-2.5" />
+                        AI
+                      </span>
                     )}
                   </div>
-                  {s.aiGenerated && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground shrink-0">
-                      <Sparkles className="size-2.5" />
-                      AI
-                    </span>
-                  )}
+                </div>
+                <div className="flex-1 px-5 py-4">
+                  <pre className="text-[11px] bg-surface-subtle border border-border p-3 rounded-lg font-mono overflow-auto max-h-24 leading-relaxed text-muted-foreground">
+                    {JSON.stringify(s.ruleJson, null, 2)}
+                  </pre>
+                </div>
+                <div className="border-t border-border px-5 py-3">
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="w-full"
+                    onClick={() => {
+                      handlePreview(s.id);
+                      setPreviewOpen(true);
+                    }}
+                  >
+                    <Eye className="size-3 mr-1" />
+                    Preview Audience
+                    <ChevronRight className="size-3 ml-auto" />
+                  </Button>
                 </div>
               </div>
-              <div className="flex-1 px-5 py-4">
-                <pre className="text-[11px] bg-surface-subtle border border-border p-3 rounded-lg font-mono overflow-auto max-h-24 leading-relaxed text-muted-foreground">
-                  {JSON.stringify(s.ruleJson, null, 2)}
-                </pre>
-              </div>
-              <div className="border-t border-border px-5 py-3">
-                <Button
-                  variant="outline"
-                  size="xs"
-                  className="w-full"
-                  onClick={() => {
-                    handlePreview(s.id);
-                    setPreviewOpen(true);
-                  }}
-                >
-                  <Eye className="size-3 mr-1" />
-                  Preview Audience
-                  <ChevronRight className="size-3 ml-auto" />
-                </Button>
-              </div>
-            </div>
+            </FadeIn>
           ))}
         </div>
       )}
