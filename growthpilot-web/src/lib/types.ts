@@ -67,6 +67,7 @@ export interface Communication {
   sentAt?: string | null;
   deliveredAt?: string | null;
   openedAt?: string | null;
+  readAt?: string | null;
   clickedAt?: string | null;
   purchasedAt?: string | null;
   failureReason?: string | null;
@@ -79,6 +80,7 @@ export type CommunicationStatus =
   | "delivered"
   | "failed"
   | "opened"
+  | "read"
   | "clicked"
   | "purchased";
 
@@ -100,12 +102,14 @@ export interface DashboardAnalytics {
     deliveredCount: number;
     failedCount: number;
     openedCount: number;
+    readCount: number;
     clickedCount: number;
     purchasedCount: number;
   };
   rates: {
     deliveryRate: number;
     openRate: number;
+    readRate: number;
     clickRate: number;
     conversionRate: number;
   };
@@ -122,12 +126,14 @@ export interface CampaignAnalytics {
   deliveredCount: number;
   failedCount: number;
   openedCount: number;
+  readCount: number;
   clickedCount: number;
   purchasedCount: number;
   revenueAttributed: number;
   rates: {
     deliveryRate: number;
     openRate: number;
+    readRate: number;
     clickRate: number;
     conversionRate: number;
   };
@@ -163,4 +169,51 @@ export interface CreateSegmentDto {
   description?: string;
   ruleJson: Record<string, unknown>;
   aiGenerated?: boolean;
+}
+
+export interface MessageSuggestion {
+  subject: string;
+  body: string;
+  cta: string;
+  placeholders: string[];
+}
+
+export interface ChannelRecommendation {
+  recommendedChannel: string;
+  reason: string;
+}
+
+export interface InsightSummary {
+  summary: string;
+  insight: string;
+  nextBestAction: string;
+}
+
+export interface AiSegmentDto {
+  businessGoal: string;
+  customerSummary?: {
+    totalCustomers: number;
+    avgOrderValue?: number;
+    topCities?: string[];
+  };
+}
+
+export interface AiMessageDto {
+  segmentName: string;
+  segmentDescription?: string;
+  channel: string;
+  objective: string;
+  offer?: string;
+  tone?: string;
+}
+
+export interface AiChannelRecommendationDto {
+  segmentName: string;
+  objective: string;
+  audienceSize?: number;
+  historicalRates?: Record<string, { deliveryRate: number; openRate: number }>;
+}
+
+export interface AiInsightsDto {
+  campaignId: string;
 }

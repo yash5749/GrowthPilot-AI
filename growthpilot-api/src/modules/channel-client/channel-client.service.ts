@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 @Injectable()
 export class ChannelClientService {
   private readonly logger = new Logger(ChannelClientService.name);
@@ -36,34 +39,47 @@ export class ChannelClientService {
       message: payload.message,
     };
 
-    try {
-      this.logger.log(`Sending communication ${payload.communicationId} to channel service at ${sendUrl}`);
+    let lastError: Error | null = null;
 
-      const response = await fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        this.logger.error(
-          `Channel service responded with ${response.status}: ${text}`,
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        this.logger.log(
+          `Sending communication ${payload.communicationId} to channel service (attempt ${attempt + 1}/${MAX_RETRIES})`,
         );
-        throw new Error(`Channel service error: ${response.status} - ${text}`);
-      }
 
-      const result = await response.json();
-      this.logger.log(
-        `Channel service accepted communication ${payload.communicationId}: ${JSON.stringify(result)}`,
-      );
-    } catch (err: any) {
-      this.logger.error(
-        `Failed to send communication ${payload.communicationId} to channel service: ${err.message}`,
-      );
-      throw err;
+        const response = await fetch(sendUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`Channel service error: ${response.status} - ${text}`);
+        }
+
+        const result = await response.json();
+        this.logger.log(
+          `Channel service accepted communication ${payload.communicationId}: ${JSON.stringify(result)}`,
+        );
+        return;
+      } catch (err: any) {
+        lastError = err;
+        this.logger.warn(
+          `Attempt ${attempt + 1}/${MAX_RETRIES} failed for communication ${payload.communicationId}: ${err.message}`,
+        );
+
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+      }
     }
+
+    this.logger.error(
+      `Failed to send communication ${payload.communicationId} after ${MAX_RETRIES} attempts: ${lastError!.message}`,
+    );
+    throw lastError!;
   }
 }

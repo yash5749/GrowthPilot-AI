@@ -1,0 +1,11 @@
+{
+  "build": {
+    "builder": "nixpacks",
+    "buildCommand": "npm install && npm run prisma:generate && npm run build"
+  },
+  "deploy": {
+    "startCommand": "npm run prisma:deploy && npm run start:prod",
+    "healthcheckPath": "/api/health",
+    "restartPolicyType": "on_failure"
+  }
+}
