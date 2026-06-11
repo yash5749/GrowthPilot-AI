@@ -106,8 +106,8 @@ export default function CustomersPage() {
                       </TableCell>
                       <TableCell className="py-3 text-xs text-muted-foreground">{c.email}</TableCell>
                       <TableCell className="py-3 text-xs text-muted-foreground">{c.city || "—"}</TableCell>
-                      <TableCell className="py-3 text-xs font-medium text-foreground">{c.metrics?.orderCount ?? c.orders?.length ?? 0}</TableCell>
-                      <TableCell className="py-3 text-xs font-medium text-foreground">${(c.metrics?.totalSpent ?? 0).toFixed(2)}</TableCell>
+                      <TableCell className="py-3 text-xs font-medium text-foreground">{c.orderCount}</TableCell>
+                      <TableCell className="py-3 text-xs font-medium text-foreground">${c.totalSpent.toFixed(2)}</TableCell>
                       <TableCell className="py-3 pr-5 text-right">
                         <Button
                           variant="ghost"
