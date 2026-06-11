@@ -189,6 +189,14 @@ export interface InsightSummary {
   nextBestAction: string;
 }
 
+export interface ImportResult {
+  total: number;
+  inserted: number;
+  skipped: number;
+  failed: number;
+  errors: { row: number; message: string }[];
+}
+
 export interface AiSegmentDto {
   businessGoal: string;
   customerSummary?: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { DashboardAnalytics } from "@/lib/types";
 import { MetricCard } from "@/components/shared/metric-card";
@@ -24,22 +24,32 @@ import {
   Target,
   MessageSquare,
   Rocket,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { CsvImportDialog } from "@/components/shared/csv-import-dialog";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ordersImportOpen, setOrdersImportOpen] = useState(false);
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const d = await api.analytics.dashboard();
+      setData(d);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    api.analytics
-      .dashboard()
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   if (loading) {
     return (
@@ -276,6 +286,35 @@ export default function DashboardPage() {
           }
         />
       </FadeIn>
+
+      <FadeIn delay={280}>
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Upload className="size-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Import Orders</p>
+              <p className="text-xs text-muted-foreground">Upload a CSV with order data to populate the system</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setOrdersImportOpen(true)}>
+            <Upload className="size-3.5 mr-1.5" />
+            Import CSV
+          </Button>
+        </div>
+      </FadeIn>
+
+      <CsvImportDialog
+        open={ordersImportOpen}
+        onOpenChange={(open) => {
+          setOrdersImportOpen(open);
+          if (!open) fetchDashboard();
+        }}
+        onImport={(file) => api.orders.import(file)}
+        title="Import Orders"
+        description="Upload a CSV file with order data. Expected columns: customerId, customerEmail, orderTotal, currency, orderedAt, channel, status."
+      />
 
       <FadeIn delay={300} as="section" className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center gap-2 mb-5">
