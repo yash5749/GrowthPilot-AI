@@ -56,14 +56,28 @@
 | `NODE_ENV` | No | Environment | `development` |
 | `CRM_CALLBACK_URL` | **Yes** | CRM callback endpoint | `https://growthpilot-api.onrender.com/api/callbacks/channel-event` |
 | `SIM_SENT_DELAY` | No | Delay before sent event (ms) | `500` |
-| `SIM_DELIVERED_DELAY` | No | Delay before delivered event (ms) | `1500` |
-| `SIM_FAILED_DELAY` | No | Delay before failed event (ms) | `1500` |
-| `SIM_OPENED_DELAY` | No | Delay before opened event (ms) | `3000` |
-| `SIM_CLICKED_DELAY` | No | Delay before clicked event (ms) | `4500` |
-| `SIM_PURCHASED_DELAY` | No | Delay before purchased event (ms) | `6000` |
-| `SIM_FAILURE_RATE` | No | Probability of failure (0.0–1.0) | `0.10` |
+| `SIM_DELIVERED_DELAY` | No | Gap between sent and delivery decision (ms) | `1000` |
+| `SIM_FAILED_DELAY` | No | Gap between sent and failed event (ms) | `1500` |
+| `SIM_OPENED_DELAY` | No | Gap between delivered and open decision (ms) | `1500` |
+| `SIM_READ_DELAY` | No | Gap between opened and read decision (ms) | `500` |
+| `SIM_CLICKED_DELAY` | No | Gap between read and click decision (ms) | `1000` |
+| `SIM_PURCHASED_DELAY` | No | Gap between click and purchase decision (ms) | `1500` |
+| `SIM_FAILURE_RATE` | No | Legacy delivery failure probability (0.0–1.0). Used as fallback when no per-channel delivery rate is set. | `0.10` |
+| `CHANNEL_SIM_<CHANNEL>_<STAGE>` | No | Per-channel stage probability. Channel: `WHATSAPP`, `EMAIL`, `SMS`. Stage: `DELIVERY`, `OPEN`, `READ`, `CLICK`, `PURCHASE`. Example: `CHANNEL_SIM_WHATSAPP_OPEN=0.75` | Built-in per-channel defaults |
 | `CALLBACK_RETRY_ATTEMPTS` | No | Max callback retries | `3` |
 | `CALLBACK_RETRY_DELAY_MS` | No | Delay between retries (ms) | `1000` |
+
+**Built-in probability defaults per channel:**
+
+| Stage | WhatsApp | Email | SMS |
+|-------|----------|-------|-----|
+| Delivery | 0.94 | 0.90 | 0.96 |
+| Open | 0.75 | 0.48 | 0.52 |
+| Read | 0.80 | 0.60 | 0.70 |
+| Click | 0.28 | 0.14 | 0.18 |
+| Purchase | 0.10 | 0.03 | 0.05 |
+
+Each stage gate uses `Math.random() < probability`. If a gate fails, the communication stops at that stage (delivery failures emit a `failed` event; later drop-offs are silent). This produces realistic funnel drop-off instead of the old binary success/failure model. See `.env.example` for full documentation.
 
 ### growthpilot-web (Frontend)
 
@@ -254,6 +268,9 @@ services:
         value: production
       - key: CRM_CALLBACK_URL
         sync: false
+      # Per-channel stage probabilities (optional — built-in defaults used if unset)
+      # - key: CHANNEL_SIM_WHATSAPP_DELIVERY
+      #   value: "0.94"
 ```
 
 ---

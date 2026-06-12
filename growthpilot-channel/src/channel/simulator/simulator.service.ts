@@ -6,7 +6,6 @@ export interface SimulatorOptions {
   communicationId: string;
   customerId: string;
   channel: string;
-  isSuccess: boolean;
 }
 
 @Injectable()
@@ -15,52 +14,88 @@ export class SimulatorService {
 
   constructor(private readonly config: ChannelConfig) {}
 
-  simulate(options: SimulatorOptions) {
-    const { communicationId, customerId, channel, isSuccess } = options;
+  async simulate(options: SimulatorOptions) {
+    const { communicationId, channel } = options;
+    const probs = this.config.getChannelProbabilities(channel);
 
-    if (isSuccess) {
-      this.scheduleSuccessPath(communicationId, customerId, channel);
-    } else {
-      this.scheduleFailurePath(communicationId, customerId, channel);
+    this.logger.log(
+      `Simulating ${channel} comm ${communicationId}: ` +
+      `delivery=${probs.delivery} open=${probs.open} read=${probs.read} click=${probs.click} purchase=${probs.purchase}`
+    );
+
+    const sent = await this.fire(communicationId, CallbackEventType.SENT, this.config.sentDelay);
+    if (!sent) return;
+
+    const delivered = await this.maybe(
+      communicationId, CallbackEventType.DELIVERED, probs.delivery, this.config.deliveredDelay,
+    );
+    if (!delivered) {
+      await this.fire(communicationId, CallbackEventType.FAILED, 0, 'Carrier delivery failed: temporary unreachable number');
+      return;
     }
-  }
 
-  private scheduleSuccessPath(communicationId: string, customerId: string, channel: string) {
-    this.scheduleEvent(communicationId, CallbackEventType.SENT, this.config.sentDelay);
-    this.scheduleEvent(communicationId, CallbackEventType.DELIVERED, this.config.deliveredDelay);
-    this.scheduleEvent(communicationId, CallbackEventType.OPENED, this.config.openedDelay);
-    this.scheduleEvent(communicationId, CallbackEventType.READ, this.config.openedDelay + 500);
-    this.scheduleEvent(communicationId, CallbackEventType.CLICKED, this.config.clickedDelay);
-    this.scheduleEvent(communicationId, CallbackEventType.PURCHASED, this.config.purchasedDelay);
-  }
+    const opened = await this.maybe(
+      communicationId, CallbackEventType.OPENED, probs.open, this.config.openedDelay,
+    );
+    if (!opened) return;
 
-  private scheduleFailurePath(communicationId: string, customerId: string, channel: string) {
-    this.scheduleEvent(communicationId, CallbackEventType.SENT, this.config.sentDelay);
-    this.scheduleEvent(
-      communicationId,
-      CallbackEventType.FAILED,
-      this.config.failedDelay,
-      'Carrier delivery failed: temporary unreachable number'
+    const read = await this.maybe(
+      communicationId, CallbackEventType.READ, probs.read, this.config.readDelay,
+    );
+    if (!read) return;
+
+    const clicked = await this.maybe(
+      communicationId, CallbackEventType.CLICKED, probs.click, this.config.clickedDelay,
+    );
+    if (!clicked) return;
+
+    await this.maybe(
+      communicationId, CallbackEventType.PURCHASED, probs.purchase, this.config.purchasedDelay,
     );
   }
 
-  private scheduleEvent(
+  private async maybe(
+    communicationId: string,
+    eventType: CallbackEventType,
+    probability: number,
+    delayMs: number,
+  ): Promise<boolean> {
+    if (delayMs > 0) {
+      await this.sleep(delayMs);
+    }
+
+    if (Math.random() < probability) {
+      this.logger.log(`Comm ${communicationId}: ${eventType} succeeds`);
+      await this.postCallback(communicationId, eventType);
+      return true;
+    }
+
+    this.logger.log(`Comm ${communicationId}: ${eventType} drops off (prob=${probability})`);
+    return false;
+  }
+
+  private async fire(
     communicationId: string,
     eventType: CallbackEventType,
     delayMs: number,
-    failureReason?: string
-  ) {
-    if (delayMs <= 0) return;
+    failureReason?: string,
+  ): Promise<boolean> {
+    if (delayMs > 0) {
+      await this.sleep(delayMs);
+    }
 
-    setTimeout(async () => {
-      await this.postCallback(communicationId, eventType, failureReason);
-    }, delayMs);
+    await this.postCallback(communicationId, eventType, failureReason);
+    return true;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private async postCallback(
     communicationId: string,
     eventType: CallbackEventType,
-    failureReason?: string
+    failureReason?: string,
   ) {
     const url = this.config.crmCallbackUrl;
     const payload: Record<string, unknown> = {
@@ -98,7 +133,7 @@ export class SimulatorService {
         );
       } catch (err) {
         this.logger.warn(
-          `Callback [${eventType}] for ${communicationId} error: ${err.message} (attempt ${attempt + 1}/${maxAttempts})`
+          `Callback [${eventType}] for ${communicationId} error: ${(err as Error).message} (attempt ${attempt + 1}/${maxAttempts})`
         );
       }
 

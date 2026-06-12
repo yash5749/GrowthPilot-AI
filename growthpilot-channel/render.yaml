@@ -20,3 +20,34 @@ services:
         value: "3"
       - key: CALLBACK_RETRY_DELAY_MS
         value: "1000"
+      # Per-channel stage probabilities (optional — built-in defaults used if unset)
+      # - key: CHANNEL_SIM_WHATSAPP_DELIVERY
+      #   value: "0.94"
+      # - key: CHANNEL_SIM_WHATSAPP_OPEN
+      #   value: "0.75"
+      # - key: CHANNEL_SIM_WHATSAPP_READ
+      #   value: "0.80"
+      # - key: CHANNEL_SIM_WHATSAPP_CLICK
+      #   value: "0.28"
+      # - key: CHANNEL_SIM_WHATSAPP_PURCHASE
+      #   value: "0.10"
+      # - key: CHANNEL_SIM_EMAIL_DELIVERY
+      #   value: "0.90"
+      # - key: CHANNEL_SIM_EMAIL_OPEN
+      #   value: "0.48"
+      # - key: CHANNEL_SIM_EMAIL_READ
+      #   value: "0.60"
+      # - key: CHANNEL_SIM_EMAIL_CLICK
+      #   value: "0.14"
+      # - key: CHANNEL_SIM_EMAIL_PURCHASE
+      #   value: "0.03"
+      # - key: CHANNEL_SIM_SMS_DELIVERY
+      #   value: "0.96"
+      # - key: CHANNEL_SIM_SMS_OPEN
+      #   value: "0.52"
+      # - key: CHANNEL_SIM_SMS_READ
+      #   value: "0.70"
+      # - key: CHANNEL_SIM_SMS_CLICK
+      #   value: "0.18"
+      # - key: CHANNEL_SIM_SMS_PURCHASE
+      #   value: "0.05"
