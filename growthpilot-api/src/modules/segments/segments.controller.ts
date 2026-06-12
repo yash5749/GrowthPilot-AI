@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { SegmentsService } from './segments.service';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 
@@ -12,8 +12,12 @@ export class SegmentsController {
   }
 
   @Get()
-  async findAll() {
-    return this.segmentsService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.segmentsService.findAll({ page, limit, search });
   }
 
   @Post('ai-suggest')

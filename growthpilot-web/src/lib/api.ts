@@ -61,7 +61,11 @@ export const api = {
   },
 
   segments: {
-    list: () => fetchJson<import("./types").Segment[]>("/segments"),
+    list: (page = 1, limit = 20, search?: string) => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (search) params.set("search", search);
+      return fetchJson<import("./types").PaginatedResponse<import("./types").Segment>>(`/segments?${params}`);
+    },
     get: (id: string) => fetchJson<import("./types").Segment>(`/segments/${id}`),
     create: (data: import("./types").CreateSegmentDto) =>
       fetchJson<import("./types").Segment>("/segments", {
@@ -81,7 +85,11 @@ export const api = {
   },
 
   campaigns: {
-    list: () => fetchJson<import("./types").Campaign[]>("/campaigns"),
+    list: (page = 1, limit = 20, search?: string) => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (search) params.set("search", search);
+      return fetchJson<import("./types").PaginatedResponse<import("./types").Campaign>>(`/campaigns?${params}`);
+    },
     get: (id: string) => fetchJson<import("./types").Campaign>(`/campaigns/${id}`),
     create: (data: import("./types").CreateCampaignDto) =>
       fetchJson<import("./types").Campaign>("/campaigns", {
@@ -97,9 +105,14 @@ export const api = {
   },
 
   communications: {
-    list: () => fetchJson<import("./types").Communication[]>("/communications"),
-    listByCampaign: (campaignId: string) =>
-      fetchJson<import("./types").Communication[]>(`/campaigns/${campaignId}/communications`),
+    list: (page = 1, limit = 20) => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      return fetchJson<import("./types").PaginatedResponse<import("./types").Communication>>(`/communications?${params}`);
+    },
+    listByCampaign: (campaignId: string, page = 1, limit = 20) => {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      return fetchJson<import("./types").PaginatedResponse<import("./types").Communication>>(`/campaigns/${campaignId}/communications?${params}`);
+    },
   },
 
   analytics: {

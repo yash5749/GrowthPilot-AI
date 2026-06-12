@@ -3,6 +3,7 @@ import { PrismaService } from '../../db/prisma.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 import { SegmentsService } from '../segments/segments.service';
 import { ChannelClientService } from '../channel-client/channel-client.service';
+import { buildPagination, paginatedResult } from '../../common/helpers/pagination.helper';
 
 @Injectable()
 export class CampaignsService {
@@ -13,7 +14,6 @@ export class CampaignsService {
   ) {}
 
   async create(createCampaignDto: CreateCampaignDto) {
-    // Verify segment exists
     await this.segmentsService.findOne(createCampaignDto.segmentId);
 
     return this.prisma.campaign.create({
@@ -28,18 +28,33 @@ export class CampaignsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.campaign.findMany({
-      include: {
-        segment: {
-          select: {
-            id: true,
-            name: true,
+  async findAll(query?: { page?: string; limit?: string; search?: string }) {
+    const pagination = buildPagination(query);
+
+    const where: any = {};
+    if (query?.search) {
+      where.name = { contains: query.search, mode: 'insensitive' };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.campaign.findMany({
+        skip: pagination.skip,
+        take: pagination.limit,
+        where,
+        include: {
+          segment: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.campaign.count({ where }),
+    ]);
+
+    return paginatedResult(data, total, pagination);
   }
 
   async findOne(id: string) {

@@ -6,12 +6,13 @@ import type { Customer } from "@/lib/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FadeIn } from "@/components/shared/fade-in";
+import { DataTablePagination } from "@/components/shared/data-table-pagination";
 import { PageHeaderSkeleton, TableSkeleton } from "@/components/shared/loading-skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, ChevronLeft, ChevronRight, Users, ShoppingCart, DollarSign, MapPin, Mail, Phone, Calendar, Upload } from "lucide-react";
+import { Search, Users, ShoppingCart, DollarSign, MapPin, Mail, Phone, Calendar, Upload } from "lucide-react";
 import { CsvImportDialog } from "@/components/shared/csv-import-dialog";
 
 export default function CustomersPage() {
@@ -128,29 +129,12 @@ export default function CustomersPage() {
           </FadeIn>
 
           <FadeIn delay={150}>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground/60">
-                Page {meta.page} of {meta.totalPages}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={meta.page <= 1}
-                  onClick={() => fetchCustomers(meta.page - 1)}
-                >
-                  <ChevronLeft className="size-3" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={meta.page >= meta.totalPages}
-                  onClick={() => fetchCustomers(meta.page + 1)}
-                >
-                  <ChevronRight className="size-3" />
-                </Button>
-              </div>
-            </div>
+            <DataTablePagination
+              page={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              onPageChange={(p) => fetchCustomers(p)}
+            />
           </FadeIn>
         </>
       )}
