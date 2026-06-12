@@ -49,7 +49,7 @@ export class CustomersService {
       ];
     }
 
-    const [data, total] = await Promise.all([
+    const [raw, total] = await Promise.all([
       this.repository.findMany({
         skip,
         take: limit,
@@ -58,6 +58,18 @@ export class CustomersService {
       }),
       this.repository.count(where),
     ]);
+
+    const data = raw.map((c) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      city: c.city,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+      orderCount: c._count.orders,
+      totalSpent: c.orders.reduce((sum, o) => sum + o.orderTotal, 0),
+    }));
 
     return {
       data,

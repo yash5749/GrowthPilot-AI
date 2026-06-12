@@ -6,6 +6,8 @@ export interface Customer {
   city?: string | null;
   createdAt: string;
   updatedAt: string;
+  orderCount: number;
+  totalSpent: number;
   orders?: Order[];
   metrics?: CustomerMetrics;
 }

@@ -24,6 +24,10 @@ export class CustomersRepository {
       take,
       where,
       orderBy,
+      include: {
+        _count: { select: { orders: true } },
+        orders: { select: { orderTotal: true } },
+      },
     });
   }
 
