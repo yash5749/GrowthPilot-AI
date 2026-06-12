@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CommunicationsService } from './communications.service';
 import { ChannelEventDto } from './dto/channel-event.dto';
 
@@ -12,12 +12,19 @@ export class CommunicationsController {
   }
 
   @Get('communications')
-  async findAll() {
-    return this.communicationsService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.communicationsService.findAll({ page, limit });
   }
 
   @Get('campaigns/:id/communications')
-  async findByCampaign(@Param('id') id: string) {
-    return this.communicationsService.findByCampaign(id);
+  async findByCampaign(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.communicationsService.findByCampaign(id, { page, limit });
   }
 }

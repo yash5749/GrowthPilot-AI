@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../db/prisma.service';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 import { evaluateCustomer } from './segments.utils';
+import { buildPagination, paginatedResult } from '../../common/helpers/pagination.helper';
 
 @Injectable()
 export class SegmentsService {
@@ -18,10 +19,25 @@ export class SegmentsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.segment.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query?: { page?: string; limit?: string; search?: string }) {
+    const pagination = buildPagination(query);
+
+    const where: any = {};
+    if (query?.search) {
+      where.name = { contains: query.search, mode: 'insensitive' };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.segment.findMany({
+        skip: pagination.skip,
+        take: pagination.limit,
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.segment.count({ where }),
+    ]);
+
+    return paginatedResult(data, total, pagination);
   }
 
   async findOne(id: string) {

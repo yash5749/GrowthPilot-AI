@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Campaign, Segment, CreateCampaignDto, MessageSuggestion, ChannelRecommendation } from "@/lib/types";
@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AIResultCard } from "@/components/shared/ai-result-card";
 import { FadeIn } from "@/components/shared/fade-in";
+import { DataTablePagination } from "@/components/shared/data-table-pagination";
 import { PageHeaderSkeleton, CampaignCardSkeleton } from "@/components/shared/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 export default function CampaignsPage() {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,24 +47,31 @@ export default function CampaignsPage() {
   const [channelResult, setChannelResult] = useState<ChannelRecommendation | null>(null);
   const [channelError, setChannelError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchCampaigns = useCallback(async (page = 1) => {
     setLoading(true);
+    setError(null);
     try {
-      const [c, s] = await Promise.all([api.campaigns.list(), api.segments.list()]);
-      setCampaigns(c);
-      setSegments(s);
+      const [c, s] = await Promise.all([
+        api.campaigns.list(page, 20),
+        api.segments.list(1, 200),
+      ]);
+      setCampaigns(c.data);
+      setMeta(c.meta);
+      setSegments(s.data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchCampaigns(1); }, [fetchCampaigns]);
 
   const stepTabs = ["details", "message", "channel"];
   const stepLabels = ["Details", "Message", "Channel"];
   const currentStep = stepTabs.indexOf(studioTab);
+
+  const refetch = () => fetchCampaigns(meta.page);
 
   const handleCreate = async () => {
     try {
@@ -72,7 +81,7 @@ export default function CampaignsPage() {
       setMessageResult(null);
       setChannelResult(null);
       setStudioTab("details");
-      fetchData();
+      refetch();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to create");
     }
@@ -81,7 +90,7 @@ export default function CampaignsPage() {
   const handleApprove = async (id: string) => {
     try {
       await api.campaigns.approve(id);
-      fetchData();
+      refetch();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to approve");
     }
@@ -90,7 +99,7 @@ export default function CampaignsPage() {
   const handleSend = async (id: string) => {
     try {
       await api.campaigns.send(id);
-      fetchData();
+      refetch();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to send");
     }
@@ -205,51 +214,61 @@ export default function CampaignsPage() {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {campaigns.map((c, i) => (
-            <FadeIn key={c.id} delay={i * 60}>
-              <div className="group rounded-xl border border-border bg-card px-5 py-4 transition-all hover:shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2.5">
-                      <h3 className="text-sm font-semibold text-foreground">{c.name}</h3>
-                      <StatusBadge status={c.status} />
+        <>
+          <div className="space-y-3">
+            {campaigns.map((c, i) => (
+              <FadeIn key={c.id} delay={i * 60}>
+                <div className="group rounded-xl border border-border bg-card px-5 py-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2.5">
+                        <h3 className="text-sm font-semibold text-foreground">{c.name}</h3>
+                        <StatusBadge status={c.status} />
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{c.objective}</p>
+                      <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground/70">
+                        <span>Segment: {c.segment?.name || "—"}</span>
+                        <span className="capitalize">Channel: {c.channel}</span>
+                        {c.sentAt && <span>Sent: {new Date(c.sentAt).toLocaleDateString()}</span>}
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{c.objective}</p>
-                    <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground/70">
-                      <span>Segment: {c.segment?.name || "—"}</span>
-                      <span className="capitalize">Channel: {c.channel}</span>
-                      {c.sentAt && <span>Sent: {new Date(c.sentAt).toLocaleDateString()}</span>}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        onClick={() => router.push(`/campaigns/${c.id}`)}
+                        className="active:scale-95 transition-all"
+                      >
+                        <Eye className="size-3 mr-1" />
+                        View
+                      </Button>
+                      {c.status === "draft" && (
+                        <Button size="xs" onClick={() => handleApprove(c.id)} className="active:scale-95 transition-all">
+                          <Check className="size-3 mr-1" />
+                          Approve
+                        </Button>
+                      )}
+                      {c.status === "approved" && (
+                        <Button size="xs" onClick={() => handleSend(c.id)} className="active:scale-95 transition-all">
+                          <Send className="size-3 mr-1" />
+                          Send
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      onClick={() => router.push(`/campaigns/${c.id}`)}
-                      className="active:scale-95 transition-all"
-                    >
-                      <Eye className="size-3 mr-1" />
-                      View
-                    </Button>
-                    {c.status === "draft" && (
-                      <Button size="xs" onClick={() => handleApprove(c.id)} className="active:scale-95 transition-all">
-                        <Check className="size-3 mr-1" />
-                        Approve
-                      </Button>
-                    )}
-                    {c.status === "approved" && (
-                      <Button size="xs" onClick={() => handleSend(c.id)} className="active:scale-95 transition-all">
-                        <Send className="size-3 mr-1" />
-                        Send
-                      </Button>
-                    )}
                   </div>
                 </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
+              </FadeIn>
+            ))}
+          </div>
+          <FadeIn delay={150}>
+            <DataTablePagination
+              page={meta.page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              onPageChange={(p) => fetchCampaigns(p)}
+            />
+          </FadeIn>
+        </>
       )}
 
       <Dialog open={createOpen} onOpenChange={handleCreateOpenChange}>

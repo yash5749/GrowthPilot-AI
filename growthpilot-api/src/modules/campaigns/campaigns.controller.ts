@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
 
@@ -12,8 +12,12 @@ export class CampaignsController {
   }
 
   @Get()
-  async findAll() {
-    return this.campaignsService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.campaignsService.findAll({ page, limit, search });
   }
 
   @Get(':id')

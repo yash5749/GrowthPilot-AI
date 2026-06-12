@@ -30,10 +30,10 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    Promise.all([api.analytics.dashboard(), api.campaigns.list()])
+    Promise.all([api.analytics.dashboard(), api.campaigns.list(1, 50)])
       .then(([d, c]) => {
         setDashboard(d);
-        setCampaigns(c);
+        setCampaigns(c.data);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));

@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../db/prisma.service';
 import { ChannelEventDto, CallbackEventType } from './dto/channel-event.dto';
+import { buildPagination, paginatedResult } from '../../common/helpers/pagination.helper';
 
 const STATUS_ORDER: Record<string, number> = {
   pending: 0,
@@ -107,39 +108,59 @@ export class CommunicationsService {
     return comm;
   }
 
-  async findByCampaign(campaignId: string) {
-    return this.prisma.communication.findMany({
-      where: { campaignId },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+  async findByCampaign(campaignId: string, query?: { page?: string; limit?: string }) {
+    const pagination = buildPagination(query);
+
+    const where = { campaignId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.communication.findMany({
+        skip: pagination.skip,
+        take: pagination.limit,
+        where,
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.communication.count({ where }),
+    ]);
+
+    return paginatedResult(data, total, pagination);
   }
 
-  async findAll() {
-    return this.prisma.communication.findMany({
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
+  async findAll(query?: { page?: string; limit?: string }) {
+    const pagination = buildPagination(query);
+
+    const [data, total] = await Promise.all([
+      this.prisma.communication.findMany({
+        skip: pagination.skip,
+        take: pagination.limit,
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          campaign: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-        campaign: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.communication.count(),
+    ]);
+
+    return paginatedResult(data, total, pagination);
   }
 }

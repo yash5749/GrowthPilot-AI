@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { Campaign, Communication, CampaignAnalytics, InsightSummary } from "@/lib/types";
@@ -10,6 +10,7 @@ import { SectionCard } from "@/components/shared/section-card";
 import { InsightCard } from "@/components/shared/insight-card";
 import { FunnelStepBar } from "@/components/shared/funnel-step-bar";
 import { FadeIn } from "@/components/shared/fade-in";
+import { DataTablePagination } from "@/components/shared/data-table-pagination";
 import { MetricGridSkeleton, SectionCardSkeleton } from "@/components/shared/loading-skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -23,8 +24,10 @@ export default function CampaignDetailPage() {
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [communications, setCommunications] = useState<Communication[]>([]);
+  const [commMeta, setCommMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [commLoading, setCommLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("funnel");
 
@@ -32,16 +35,30 @@ export default function CampaignDetailPage() {
   const [aiInsightsLoading, setAiInsightsLoading] = useState(false);
   const [aiInsightsError, setAiInsightsError] = useState<string | null>(null);
 
+  const fetchCommunications = useCallback(async (page = 1) => {
+    setCommLoading(true);
+    try {
+      const res = await api.communications.listByCampaign(id, page, 20);
+      setCommunications(res.data);
+      setCommMeta(res.meta);
+    } catch {
+      // silent fail for communications
+    } finally {
+      setCommLoading(false);
+    }
+  }, [id]);
+
   const fetchAll = async () => {
     setLoading(true);
     try {
       const [c, comms, a] = await Promise.all([
         api.campaigns.get(id),
-        api.communications.listByCampaign(id),
+        api.communications.listByCampaign(id, 1, 20),
         api.analytics.campaign(id).catch(() => null),
       ]);
       setCampaign(c);
-      setCommunications(comms);
+      setCommunications(comms.data);
+      setCommMeta(comms.meta);
       setAnalytics(a);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load campaign");
@@ -109,12 +126,13 @@ export default function CampaignDetailPage() {
     );
   }
 
+  const funnelTotal = commMeta.total || communications.length || 1;
   const eventFunnel = [
-    { label: "Sent", value: analytics?.sentCount ?? communications.filter((c) => c.status !== "pending").length, total: communications.length || 1 },
-    { label: "Delivered", value: analytics?.deliveredCount ?? communications.filter((c) => c.deliveredAt).length, total: communications.length || 1 },
-    { label: "Opened", value: analytics?.openedCount ?? communications.filter((c) => c.openedAt).length, total: communications.length || 1 },
-    { label: "Clicked", value: analytics?.clickedCount ?? communications.filter((c) => c.clickedAt).length, total: communications.length || 1 },
-    { label: "Purchased", value: analytics?.purchasedCount ?? communications.filter((c) => c.purchasedAt).length, total: communications.length || 1 },
+    { label: "Sent", value: analytics?.sentCount ?? communications.filter((c) => c.status !== "pending").length, total: funnelTotal },
+    { label: "Delivered", value: analytics?.deliveredCount ?? communications.filter((c) => c.deliveredAt).length, total: funnelTotal },
+    { label: "Opened", value: analytics?.openedCount ?? communications.filter((c) => c.openedAt).length, total: funnelTotal },
+    { label: "Clicked", value: analytics?.clickedCount ?? communications.filter((c) => c.clickedAt).length, total: funnelTotal },
+    { label: "Purchased", value: analytics?.purchasedCount ?? communications.filter((c) => c.purchasedAt).length, total: funnelTotal },
   ];
 
   return (
@@ -233,41 +251,53 @@ export default function CampaignDetailPage() {
             </TabsContent>
 
             <TabsContent value="recipients" className="mt-0">
-              {communications.length === 0 ? (
+              {commLoading ? (
+                <div className="py-12 text-center text-xs text-muted-foreground">
+                  Loading...
+                </div>
+              ) : communications.length === 0 ? (
                 <div className="py-12 text-center text-xs text-muted-foreground">
                   No communications yet. Send the campaign to see recipients.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-b border-border">
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Customer</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Status</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Sent</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Delivered</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Opened</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Clicked</TableHead>
-                        <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Purchased</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {communications.map((c) => (
-                        <TableRow key={c.id} className="border-b border-border">
-                          <TableCell className="py-3">
-                            <p className="text-xs font-medium text-foreground">{c.customer?.name || "—"}</p>
-                            <p className="text-[11px] text-muted-foreground">{c.customer?.email}</p>
-                          </TableCell>
-                          <TableCell className="py-3"><StatusBadge status={c.status} /></TableCell>
-                          <TableCell className="py-3 text-xs text-muted-foreground">{c.sentAt ? new Date(c.sentAt).toLocaleDateString() : "—"}</TableCell>
-                          <TableCell className="py-3 text-xs text-muted-foreground">{c.deliveredAt ? new Date(c.deliveredAt).toLocaleDateString() : "—"}</TableCell>
-                          <TableCell className="py-3 text-xs text-muted-foreground">{c.openedAt ? new Date(c.openedAt).toLocaleDateString() : "—"}</TableCell>
-                          <TableCell className="py-3 text-xs text-muted-foreground">{c.clickedAt ? new Date(c.clickedAt).toLocaleDateString() : "—"}</TableCell>
-                          <TableCell className="py-3 text-xs text-muted-foreground">{c.purchasedAt ? new Date(c.purchasedAt).toLocaleDateString() : "—"}</TableCell>
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-border">
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Customer</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Status</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Sent</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Delivered</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Opened</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Clicked</TableHead>
+                          <TableHead className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider py-3">Purchased</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {communications.map((c) => (
+                          <TableRow key={c.id} className="border-b border-border">
+                            <TableCell className="py-3">
+                              <p className="text-xs font-medium text-foreground">{c.customer?.name || "—"}</p>
+                              <p className="text-[11px] text-muted-foreground">{c.customer?.email}</p>
+                            </TableCell>
+                            <TableCell className="py-3"><StatusBadge status={c.status} /></TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">{c.sentAt ? new Date(c.sentAt).toLocaleDateString() : "—"}</TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">{c.deliveredAt ? new Date(c.deliveredAt).toLocaleDateString() : "—"}</TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">{c.openedAt ? new Date(c.openedAt).toLocaleDateString() : "—"}</TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">{c.clickedAt ? new Date(c.clickedAt).toLocaleDateString() : "—"}</TableCell>
+                            <TableCell className="py-3 text-xs text-muted-foreground">{c.purchasedAt ? new Date(c.purchasedAt).toLocaleDateString() : "—"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <DataTablePagination
+                    page={commMeta.page}
+                    totalPages={commMeta.totalPages}
+                    total={commMeta.total}
+                    onPageChange={(p) => fetchCommunications(p)}
+                  />
                 </div>
               )}
             </TabsContent>
