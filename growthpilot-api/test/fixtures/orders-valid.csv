@@ -1,0 +1,5 @@
+customerEmail,orderTotal,currency,orderedAt,channel,status
+alice@example.com,149.99,USD,2026-01-15,website,completed
+bob@example.com,249.50,USD,2026-02-20,website,completed
+charlie@example.com,89.99,USD,2026-03-10,mobile,completed
+alice@example.com,59.99,USD,2026-04-05,mobile,completed
