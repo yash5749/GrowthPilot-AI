@@ -17,15 +17,19 @@ import { MockAiProvider } from './mock-ai.provider';
 export class GithubModelsProvider implements AiProvider {
   private readonly logger = new Logger(GithubModelsProvider.name);
   private readonly apiKey: string | undefined;
+  private readonly model: string;
+  private readonly endpoint: string;
+  private readonly useJsonMode: boolean;
   private readonly fallback: MockAiProvider;
-  private readonly model = 'openai/gpt-4o-mini';
-  private readonly endpoint = 'https://models.inference.ai.azure.com/chat/completions';
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('GITHUB_MODELS_API_KEY');
+    this.model = this.configService.get<string>('AI_MODEL') || 'gpt-4o-mini';
+    this.endpoint = this.configService.get<string>('GITHUB_MODELS_ENDPOINT') || 'https://models.inference.ai.azure.com/chat/completions';
+    this.useJsonMode = this.configService.get<boolean>('GITHUB_MODELS_JSON_MODE') ?? true;
     this.fallback = new MockAiProvider();
     if (!this.apiKey) {
-      this.logger.warn('GITHUB_MODELS_API_KEY not set — GithubModelsProvider will fall back to mock responses.');
+      this.logger.warn('GITHUB_MODELS_API_KEY not set — GitHub Models calls will fail.');
     }
   }
 
@@ -37,42 +41,55 @@ export class GithubModelsProvider implements AiProvider {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const res = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 512,
-        response_format: { type: 'json_object' },
-      }),
-      signal: controller.signal,
-    });
+    const body: Record<string, unknown> = {
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 512,
+    };
+
+    if (this.useJsonMode) {
+      body.response_format = { type: 'json_object' };
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (err: any) {
+      clearTimeout(timeout);
+      throw new Error(`GitHub Models HTTP request failed: ${err.message}`);
+    }
 
     clearTimeout(timeout);
 
     if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`GitHub Models API error ${res.status}: ${body}`);
+      const responseBody = await res.text();
+      throw new Error(`GitHub Models API error: status=${res.status}, body=${responseBody.slice(0, 500)}`);
     }
 
     const data = (await res.json()) as any;
     return (data?.choices?.[0]?.message?.content || '').trim();
   }
 
-  private parseJson<T>(raw: string, fallbackValue: T): T {
+  private parseJson<T>(raw: string): T {
     try {
       return JSON.parse(raw) as T;
     } catch {
-      this.logger.warn(`Failed to parse JSON from GitHub Models. Raw: ${raw.slice(0, 200)}`);
-      return fallbackValue;
+      this.logger.error(`Failed to parse AI response as JSON: ${raw.slice(0, 200)}`);
+      throw new Error('Invalid JSON response from AI model');
     }
   }
 
@@ -91,10 +108,10 @@ Return JSON with exactly these fields:
 }`;
 
       const raw = await this.callGithubModels(system, user);
-      const parsed = this.parseJson<Partial<SegmentSuggestion>>(raw, {});
+      const parsed = this.parseJson<Partial<SegmentSuggestion>>(raw);
 
       if (!parsed.name || !parsed.ruleJson || !parsed.reason) {
-        return this.fallback.generateSegment(input);
+        throw new Error(`AI returned incomplete segment: ${JSON.stringify(parsed).slice(0, 200)}`);
       }
 
       return {
@@ -105,7 +122,7 @@ Return JSON with exactly these fields:
         aiGenerated: true,
       };
     } catch (err: any) {
-      this.logger.error(`GithubModelsProvider.generateSegment error: ${err.message}`);
+      this.logger.error(`${GithubModelsProvider.name}.generateSegment failed: ${err.message}${err.stack ? '\n' + err.stack.split('\n').slice(0, 2).join('\n') : ''}`);
       return this.fallback.generateSegment(input);
     }
   }
@@ -128,10 +145,10 @@ Return JSON:
 }`;
 
       const raw = await this.callGithubModels(system, user);
-      const parsed = this.parseJson<Partial<MessageSuggestion>>(raw, {});
+      const parsed = this.parseJson<Partial<MessageSuggestion>>(raw);
 
       if (!parsed.body || !parsed.cta) {
-        return this.fallback.generateMessage(input);
+        throw new Error(`AI returned incomplete message: ${JSON.stringify(parsed).slice(0, 200)}`);
       }
 
       return {
@@ -141,7 +158,7 @@ Return JSON:
         placeholders: Array.isArray(parsed.placeholders) ? parsed.placeholders : ['{{name}}', '{{email}}'],
       };
     } catch (err: any) {
-      this.logger.error(`GithubModelsProvider.generateMessage error: ${err.message}`);
+      this.logger.error(`${GithubModelsProvider.name}.generateMessage failed: ${err.message}${err.stack ? '\n' + err.stack.split('\n').slice(0, 2).join('\n') : ''}`);
       return this.fallback.generateMessage(input);
     }
   }
@@ -157,11 +174,11 @@ Channels available: whatsapp, email, sms
 Return JSON: { "recommendedChannel": "whatsapp|email|sms", "reason": "1-2 sentence explanation" }`;
 
       const raw = await this.callGithubModels(system, user);
-      const parsed = this.parseJson<Partial<ChannelRecommendation>>(raw, {});
+      const parsed = this.parseJson<Partial<ChannelRecommendation>>(raw);
 
       const validChannels = ['whatsapp', 'email', 'sms'];
       if (!parsed.recommendedChannel || !validChannels.includes(parsed.recommendedChannel) || !parsed.reason) {
-        return this.fallback.recommendChannel(input);
+        throw new Error(`AI returned invalid channel recommendation: ${JSON.stringify(parsed).slice(0, 200)}`);
       }
 
       return {
@@ -169,7 +186,7 @@ Return JSON: { "recommendedChannel": "whatsapp|email|sms", "reason": "1-2 senten
         reason: String(parsed.reason),
       };
     } catch (err: any) {
-      this.logger.error(`GithubModelsProvider.recommendChannel error: ${err.message}`);
+      this.logger.error(`${GithubModelsProvider.name}.recommendChannel failed: ${err.message}${err.stack ? '\n' + err.stack.split('\n').slice(0, 2).join('\n') : ''}`);
       return this.fallback.recommendChannel(input);
     }
   }
@@ -185,10 +202,10 @@ Rates: delivery=${(input.rates.deliveryRate * 100).toFixed(1)}%, open=${(input.r
 Return JSON: { "summary": "2-3 sentences", "insight": "1 key finding", "nextBestAction": "1 specific recommendation" }`;
 
       const raw = await this.callGithubModels(system, user);
-      const parsed = this.parseJson<Partial<InsightSummary>>(raw, {});
+      const parsed = this.parseJson<Partial<InsightSummary>>(raw);
 
       if (!parsed.summary || !parsed.insight || !parsed.nextBestAction) {
-        return this.fallback.generateInsights(input);
+        throw new Error(`AI returned incomplete insights: ${JSON.stringify(parsed).slice(0, 200)}`);
       }
 
       return {
@@ -197,7 +214,7 @@ Return JSON: { "summary": "2-3 sentences", "insight": "1 key finding", "nextBest
         nextBestAction: String(parsed.nextBestAction),
       };
     } catch (err: any) {
-      this.logger.error(`GithubModelsProvider.generateInsights error: ${err.message}`);
+      this.logger.error(`${GithubModelsProvider.name}.generateInsights failed: ${err.message}${err.stack ? '\n' + err.stack.split('\n').slice(0, 2).join('\n') : ''}`);
       return this.fallback.generateInsights(input);
     }
   }

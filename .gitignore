@@ -55,6 +55,14 @@ temp/
 .AppleDouble
 .LSOverride
 
-
+#extra clutter
 AUDIT_REPORT.md
 STABILIZATION_REPORT.md
+CLAUDE.md
+copilot-instructions.md
+opencode.json
+skills-lock.json
+.agents/
+.claude/
+.kilocode/
+AGENTS.md

@@ -43,8 +43,12 @@
 | `DATABASE_URL` | **Yes** | PostgreSQL connection string | `postgresql://user:pass@host:5432/growthpilot?schema=public` |
 | `CHANNEL_SERVICE_URL` | Yes† | URL of deployed channel service | `https://growthpilot-channel.onrender.com` |
 | `AI_PROVIDER` | No | AI provider: `mock`, `gemini`, or `github` (default: mock) | `mock` |
+| `AI_MODEL` | No | Model name for GitHub provider (default: `openai/gpt-4o-mini`). Use `{publisher}/{model}` format from [GitHub Models catalog](https://models.github.ai/catalog/models). Examples: `openai/gpt-4o-mini`, `deepseek/deepseek-r1`, `meta-llama/Llama-3.3-70B-Instruct` | `openai/gpt-4o-mini` |
+| `GEMINI_MODEL` | No | Model name for Gemini provider (default: `gemini-1.5-flash`). Examples: `gemini-1.5-pro`, `gemini-2.0-flash` | `gemini-1.5-flash` |
 | `GEMINI_API_KEY` | If using Gemini | Google Gemini API key | `AIza...` |
-| `GITHUB_MODELS_API_KEY` | If using GitHub | GitHub Models token | `ghp_...` |
+| `GITHUB_MODELS_API_KEY` | If using GitHub | GitHub PAT with `models` scope | `ghp_...` |
+| `GITHUB_MODELS_ENDPOINT` | No | GitHub Models API endpoint URL. Only change if using a custom/organization endpoint. | `https://models.github.ai/inference/chat/completions` |
+| `GITHUB_MODELS_JSON_MODE` | No | Enable `response_format: json_object`. Set to `false` for models that do not support it (e.g., DeepSeek, Llama). | `true` |
 
 † Channel service URL is optional; without it, campaign sends skip the channel service.
 

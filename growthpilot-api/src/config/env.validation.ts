@@ -1,11 +1,17 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, IsOptional, validateSync } from 'class-validator';
+import { IsEnum, IsNumber, IsString, IsBoolean, IsOptional, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
   Production = 'production',
   Test = 'test',
   Staging = 'staging',
+}
+
+enum AiProvider {
+  Mock = 'mock',
+  Github = 'github',
+  Gemini = 'gemini',
 }
 
 class EnvironmentVariables {
@@ -21,6 +27,34 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   CHANNEL_SERVICE_URL?: string;
+
+  @IsEnum(AiProvider)
+  @IsOptional()
+  AI_PROVIDER?: string;
+
+  @IsString()
+  @IsOptional()
+  AI_MODEL?: string;
+
+  @IsString()
+  @IsOptional()
+  GEMINI_MODEL?: string;
+
+  @IsString()
+  @IsOptional()
+  GEMINI_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  GITHUB_MODELS_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  GITHUB_MODELS_ENDPOINT?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  GITHUB_MODELS_JSON_MODE?: boolean;
 }
 
 export function validate(config: Record<string, unknown>) {
