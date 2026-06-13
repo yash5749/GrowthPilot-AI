@@ -93,84 +93,6 @@ Each stage gate uses `Math.random() < probability`. If a gate fails, the communi
 
 ---
 
-## 3. Railway Deployment Plan
-
-### Architecture on Railway
-
-```
-Railway Project: growthpilot
-├── PostgreSQL Plugin (database)
-├── Service: growthpilot-api
-└── Service: growthpilot-channel
-```
-
-### Step-by-step
-
-#### Database
-1. Create new Railway project "growthpilot"
-2. Add a **PostgreSQL** plugin (Railway provisions it automatically)
-3. Copy the `DATABASE_URL` from the PostgreSQL plugin's "Connect" tab
-
-#### CRM API (growthpilot-api)
-1. Create new service → "Deploy from repo" → select `growthpilot-api`
-2. Set **Root Directory**: (leave as `/`)
-3. Railway auto-detects Node.js from `package.json`
-4. The `railway.json` at the repo root configures build/deploy commands:
-   - **Build:** `npm install && npm run prisma:generate && npm run build`
-   - **Start:** `npm run prisma:deploy && npm run start:prod`
-5. Add environment variables:
-   - `DATABASE_URL` → paste from PostgreSQL plugin
-   - `CHANNEL_SERVICE_URL` → `https://growthpilot-channel.up.railway.app` (after deploying channel)
-   - `AI_PROVIDER` → `mock`
-   - `PORT` → (Railway sets this automatically)
-6. Deploy
-
-#### Channel Service (growthpilot-channel)
-1. Create new service → "Deploy from repo" → select `growthpilot-channel`
-2. The `railway.json` at the repo root configures:
-   - **Build:** `npm install && npm run build`
-   - **Start:** `npm run start:prod`
-3. Add environment variables:
-   - `CRM_CALLBACK_URL` → `https://growthpilot-api.up.railway.app/api/callbacks/channel-event`
-4. Deploy
-
-#### Frontend (Vercel — see Section 5)
-Railway does not host Next.js optimally. Deploy the frontend on Vercel.
-
-### railway.json files
-
-**growthpilot-api/railway.json:**
-```json
-{
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "npm install && npm run prisma:generate && npm run build"
-  },
-  "deploy": {
-    "startCommand": "npm run prisma:deploy && npm run start:prod",
-    "healthcheckPath": "/api/health",
-    "restartPolicyType": "on_failure"
-  }
-}
-```
-
-**growthpilot-channel/railway.json:**
-```json
-{
-  "build": {
-    "builder": "nixpacks",
-    "buildCommand": "npm install && npm run build"
-  },
-  "deploy": {
-    "startCommand": "npm run start:prod",
-    "healthcheckPath": "/channel/health",
-    "restartPolicyType": "on_failure"
-  }
-}
-```
-
----
-
 ## 4. Render Deployment Plan
 
 ### Architecture on Render
@@ -335,16 +257,16 @@ This file exists at `growthpilot-web/vercel.json`. Vercel auto-detects Next.js, 
 ### Launch Sequence
 
 ```
-Step 1: Provision Database (Neon or Railway PostgreSQL)
+Step 1: Provision Database (Render PostgreSQL)
   → Copy DATABASE_URL
   → Run migrations: prisma migrate deploy
 
-Step 2: Deploy CRM API (Railway or Render)
+Step 2: Deploy CRM API (Render)
   → Set DATABASE_URL, CHANNEL_SERVICE_URL
   → Verify /api/health returns 200
   → Run seed: npm run prisma:seed
 
-Step 3: Deploy Channel Service (Railway or Render)
+Step 3: Deploy Channel Service (Render)
   → Set CRM_CALLBACK_URL → https://crm-api-url/api/callbacks/channel-event
   → Verify /channel/health returns 200
 
@@ -390,9 +312,7 @@ open https://growthpilot-web.vercel.app/dashboard
 
 ### Production Considerations (Future)
 
-- [ ] Restrict CORS to specific frontend origin(s) instead of wildcard
 - [ ] Add rate limiting to API endpoints
 - [ ] Add authentication/API keys for callback endpoints
-- [ ] Increase SIM delays for more realistic demo timing
 - [ ] Add monitoring (Sentry, LogRocket, or similar)
 - [ ] Set up automated database backups
