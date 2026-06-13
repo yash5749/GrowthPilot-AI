@@ -1,30 +1,35 @@
 # GrowthPilot Web
 
-Dashboard frontend for GrowthPilot AI — an AI-powered shopper outreach CRM.
+[![Web CI](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/web-ci.yml/badge.svg)](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/web-ci.yml)
 
-Built with **Next.js 16**, **Tailwind CSS v4**, and **shadcn/ui**.
+Dashboard frontend — Next.js 16 + Tailwind CSS v4 + shadcn/ui.
 
-## Development
+## Scripts
 
-```bash
-npm run dev
-```
-
-Opens on `http://localhost:3000`.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server on `http://localhost:3000` |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run lint` | Lint source files |
 
 ## Environment
 
-```env
+Copy `.env.example` to `.env.local` and configure:
+
+```
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
 
 ## Pages
 
-- `/dashboard` — aggregate KPIs
-- `/customers` — customer table with import
-- `/segments` — segment builder with AI suggest
-- `/campaigns` — campaign studio
-- `/campaigns/[id]` — campaign detail + funnel
-- `/analytics` — campaign comparison
+| Route | Description |
+|---|---|
+| `/dashboard` | Aggregate KPIs and funnel |
+| `/customers` | Customer table with CSV import |
+| `/segments` | Segment builder with AI suggest |
+| `/campaigns` | Campaign studio |
+| `/campaigns/[id]` | Campaign detail + communications + analytics |
+| `/analytics` | Campaign comparison |
 
-See the [root README](../README.md) for full project documentation.
+See the [root README](../README.md) for full project docs.

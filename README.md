@@ -18,6 +18,55 @@
 
 ---
 
+
+## Reviewer Quick Start
+
+This repository uses a monorepo architecture with three independent services.
+
+### Services
+
+| Component | Location |
+|---|---|
+| Frontend Application | `./growthpilot-web` |
+| Backend CRM API | `./growthpilot-api` |
+| Channel Service | `./growthpilot-channel` |
+
+### Key Documentation
+
+| File | Purpose |
+|---|---|
+| `UML_DIAGRAMS.md` | System diagrams and architecture flow |
+| `ARCHITECTURE_DECISIONS.md` | Why key technical choices were made |
+| `DEPLOYMENT_GUIDE.md` | Deployment steps |
+| `FUTURE_IMPROVEMENTS.md` | Planned enhancements |
+
+### Submission Links
+
+- **Deployed Frontend:** [Click Me](https://growthpilot-ai-crm.devyash.in/dashboard$0)
+- **Frontend Web:** [GrowthPilot AI CRM](https://github.com/yash5749/GrowthPilot-AI/tree/main/growthpilot-web$0)
+- **Backend API:** [GrowthPilot API](https://github.com/yash5749/GrowthPilot-AI/tree/main/growthpilot-api)
+- **Channel Service:** [GrowthPilot API](https://github.com/yash5749/GrowthPilot-AI/tree/main/growthpilot-channel)
+- **Walkthrough Video:** [Watch Video](https://drive.google.com/file/d/14f6A2680uH48-SZ5FJolUxqRTiPPSsAf/view?usp=share_link)
+
+
+---
+
+## Overview
+
+GrowthPilot AI is a focused marketing CRM for consumer brands. It lets businesses import customer and order data, build behavioral segments, generate personalized AI-powered messages, send campaigns through a simulated channel service, track engagement events, and surface analytics.
+
+The system is built as three independent, deployable services:
+
+1. `growthpilot-api` — CRM backend
+2. `growthpilot-channel` — channel simulation service
+3. `growthpilot-web` — frontend dashboard
+
+### Why three services?
+
+The channel service is intentionally decoupled from the CRM to reflect real-world communication infrastructure. In production, it could be replaced with Twilio, SendGrid, or another provider while keeping the CRM contract unchanged.
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
