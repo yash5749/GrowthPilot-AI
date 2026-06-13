@@ -17,10 +17,12 @@ import { MockAiProvider } from './mock-ai.provider';
 export class GeminiProvider implements AiProvider {
   private readonly logger = new Logger(GeminiProvider.name);
   private readonly apiKey: string | undefined;
+  private readonly model: string;
   private readonly fallback: MockAiProvider;
 
   constructor(private readonly configService: ConfigService) {
     this.apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    this.model = this.configService.get<string>('GEMINI_MODEL') || 'gemini-1.5-flash';
     this.fallback = new MockAiProvider();
     if (!this.apiKey) {
       this.logger.warn('GEMINI_API_KEY not set — GeminiProvider will fall back to mock responses.');
@@ -32,8 +34,7 @@ export class GeminiProvider implements AiProvider {
       throw new Error('No Gemini API key configured');
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
-
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
