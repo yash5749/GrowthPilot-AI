@@ -9,17 +9,16 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { AIResultCard } from "@/components/shared/ai-result-card";
 import { FadeIn } from "@/components/shared/fade-in";
 import { DataTablePagination } from "@/components/shared/data-table-pagination";
-import { PageHeaderSkeleton, CampaignCardSkeleton } from "@/components/shared/loading-skeleton";
+import { CampaignCardSkeleton } from "@/components/shared/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Plus, Send, Check, Eye, Sparkles, Wand2, Lightbulb, Loader2, Rocket, ArrowRight, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Plus, Send, Check, Eye, Wand2, Lightbulb, Loader2, Rocket, ArrowRight, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CampaignsPage() {
@@ -65,6 +64,9 @@ export default function CampaignsPage() {
     }
   }, []);
 
+  // fetchCampaigns is the single source of truth; calling it from
+  // useEffect avoids duplicating business logic across two code paths.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCampaigns(1); }, [fetchCampaigns]);
 
   const stepTabs = ["details", "message", "channel"];

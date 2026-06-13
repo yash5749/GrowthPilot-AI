@@ -12,6 +12,10 @@
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
 
+[![API CI](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/api-ci.yml/badge.svg)](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/api-ci.yml)
+[![Channel CI](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/channel-ci.yml/badge.svg)](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/channel-ci.yml)
+[![Web CI](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/web-ci.yml/badge.svg)](https://github.com/yash5749/GrowthPilot-AI/actions/workflows/web-ci.yml)
+
 ---
 
 ## Table of Contents

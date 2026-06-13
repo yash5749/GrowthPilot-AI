@@ -1,0 +1,5 @@
+name,email,phone,city
+,no-name@example.com,+1-555-0101,New York
+Valid Name,invalid-email,+1-555-0102,Los Angeles
+Alice Johnson,alice@example.com,+1-555-0103,Chicago
+,missing-both,,New York

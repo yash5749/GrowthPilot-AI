@@ -1,0 +1,6 @@
+customerEmail,orderTotal,currency,orderedAt,channel,status
+nonexistent@example.com,99.99,USD,2026-01-15,website,completed
+alice@example.com,,USD,2026-02-20,website,completed
+alice@example.com,not-a-number,USD,2026-03-10,website,completed
+bob@example.com,49.99,USD,2026-04-05,,completed
+bob@example.com,29.99,USD,invalid-date,website,completed

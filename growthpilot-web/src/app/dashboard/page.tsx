@@ -16,7 +16,6 @@ import {
   Tags,
   Send,
   TrendingUp,
-  DollarSign,
   Sparkles,
   Plus,
   ArrowRight,
@@ -47,9 +46,10 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+  // fetchDashboard is also called by the import dialog onClose;
+  // inlining it here would split the data-loading logic in two.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
 
   if (loading) {
     return (
