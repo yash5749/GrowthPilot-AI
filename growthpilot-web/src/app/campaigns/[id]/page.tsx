@@ -48,7 +48,7 @@ export default function CampaignDetailPage() {
     }
   }, [id]);
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [c, comms, a] = await Promise.all([
@@ -65,9 +65,12 @@ export default function CampaignDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchAll(); }, [id]);
+  // fetchAll is reused by handleApprove/handleSend for refetching;
+  // inlining it here would duplicate the business logic.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleGenerateInsights = async () => {
     setAiInsightsLoading(true);

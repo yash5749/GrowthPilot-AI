@@ -7,6 +7,7 @@ describe('HealthController', () => {
   let controller: HealthController;
   let prisma: jest.Mocked<PrismaService>;
   let configService: jest.Mocked<ConfigService>;
+  let originalFetch: typeof global.fetch;
 
   const mockPrisma = {
     $queryRawUnsafe: jest.fn(),
@@ -15,6 +16,15 @@ describe('HealthController', () => {
   const mockConfigService = {
     get: jest.fn(),
   };
+
+  beforeAll(() => {
+    originalFetch = global.fetch;
+    global.fetch = jest.fn().mockRejectedValue(new Error('fetch not mocked'));
+  });
+
+  afterAll(() => {
+    global.fetch = originalFetch;
+  });
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -45,6 +55,7 @@ describe('HealthController', () => {
     it('returns healthy when all services respond', async () => {
       mockPrisma.$queryRawUnsafe.mockResolvedValue([{ '1': 1 }]);
       mockConfigService.get.mockReturnValue('http://localhost:4001');
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true } as Response);
 
       const result = await controller.getSystemHealth();
 

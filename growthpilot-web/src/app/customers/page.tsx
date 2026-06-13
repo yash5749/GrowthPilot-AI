@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FadeIn } from "@/components/shared/fade-in";
 import { DataTablePagination } from "@/components/shared/data-table-pagination";
-import { PageHeaderSkeleton, TableSkeleton } from "@/components/shared/loading-skeleton";
+import { TableSkeleton } from "@/components/shared/loading-skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,9 +39,10 @@ export default function CustomersPage() {
     }
   }, [search]);
 
-  useEffect(() => {
-    fetchCustomers(1);
-  }, [fetchCustomers]);
+  // fetchCustomers is also called by pagination and handles search
+  // internally; duplicating it inline would create two sources of truth.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchCustomers(1); }, [fetchCustomers]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">

@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { AIResultCard } from "@/components/shared/ai-result-card";
 import { FadeIn } from "@/components/shared/fade-in";
 import { DataTablePagination } from "@/components/shared/data-table-pagination";
-import { PageHeaderSkeleton, CardGridSkeleton } from "@/components/shared/loading-skeleton";
+import { CardGridSkeleton } from "@/components/shared/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,6 +49,9 @@ export default function SegmentsPage() {
     }
   }, [search]);
 
+  // fetchSegments is also called by pagination and after create;
+  // keeping one reusable function prevents logic drift.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchSegments(1); }, [fetchSegments]);
 
   const handleCreate = async () => {
