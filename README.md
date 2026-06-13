@@ -546,7 +546,7 @@ CHANNEL_SERVICE_URL=http://localhost:4001
 AI_PROVIDER=mock              # mock, github, or gemini
 
 # GitHub Models (when AI_PROVIDER=github)
-AI_MODEL=openai/gpt-4o-mini
+AI_MODEL=gpt-4o-mini
 GITHUB_MODELS_API_KEY=
 
 # Gemini (when AI_PROVIDER=gemini)
@@ -1054,18 +1054,6 @@ cd growthpilot-web && npm install
 
 ## License
 
-Creative Commons Attribution 4.0 International License (CC BY 4.0)
+MIT License. See [`LICENSE`](./LICENSE) for details.
 
-Copyright (c) 2026 GrowthPilot AI
 
-This work is licensed under the Creative Commons Attribution 4.0 International License.
-To view a copy of this license, visit https://creativecommons.org/licenses/by/4.0/
-
-You are free to:
-
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material for any purpose, even commercially
-
-Under the following terms:
-
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
